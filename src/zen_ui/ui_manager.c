@@ -10,7 +10,7 @@ void    ui_manager_event(ev_t event);
 void    ui_manager_add(view_t* view);
 void    ui_manager_add_to_top(view_t* view);
 void    ui_manager_remove(view_t* view);
-void    ui_manager_render(uint32_t time);
+void    ui_manager_render(uint32_t time, bm_rgba_t* bm);
 void    ui_manager_activate(view_t* view);
 view_t* ui_manager_get_root();
 void    ui_manager_resize_to_root(view_t* view);
@@ -228,7 +228,7 @@ void ui_manager_collect(view_t* view, vec_t* views)
     }
 }
 
-void ui_manager_render(uint32_t time)
+void ui_manager_render(uint32_t time, bm_rgba_t* bm)
 {
     if (views.arrange == 1)
     {
@@ -237,7 +237,7 @@ void ui_manager_render(uint32_t time)
 	ui_generator_use(uim.views);
 	views.arrange = 0;
     }
-    ui_generator_render(time);
+    ui_generator_render(time, bm);
 }
 
 view_t* ui_manager_get_root()

@@ -16,7 +16,6 @@ void ui_screenshot(uint32_t time);
 #if __INCLUDE_LEVEL__ == 0
 
 #include "bm_rgba_util.c"
-#include "coder.c"
 #include "config.c"
 #include "map_util.c"
 #include "tg_css.c"
@@ -36,7 +35,6 @@ void ui_screenshot(uint32_t time);
 #include "viewgen_css.c"
 #include "viewgen_html.c"
 #include "viewgen_type.c"
-#include "wm_connector.c"
 #include "zc_bm_rgba.c"
 #include "zc_callback.c"
 #include "zc_cstring.c"
@@ -119,16 +117,16 @@ void on_songlist_event(ui_table_t* table, ui_table_event event, void* userdata)
 	break;
 	case UI_TABLE_EVENT_KEY:
 	{
-	    ev_t ev = *((ev_t*) userdata);
+	    /* ev_t ev = *((ev_t*) userdata); */
 
-	    if (ev.keycode == SDLK_DOWN || ev.keycode == SDLK_UP)
-	    {
-		int32_t index = table->selected_index;
+	    /* if (ev.keycode == SDLK_DOWN || ev.keycode == SDLK_UP) */
+	    /* { */
+	    /* 	int32_t index = table->selected_index; */
 
-		if (ev.keycode == SDLK_DOWN) index += 1;
-		if (ev.keycode == SDLK_UP) index -= 1;
-		ui_table_select(table, index);
-	    }
+	    /* 	if (ev.keycode == SDLK_DOWN) index += 1; */
+	    /* 	if (ev.keycode == SDLK_UP) index -= 1; */
+	    /* 	ui_table_select(table, index); */
+	    /* } */
 	}
 	break;
 	case UI_TABLE_EVENT_DROP:
@@ -138,6 +136,8 @@ void on_songlist_event(ui_table_t* table, ui_table_event event, void* userdata)
 
 void ui_init(float width, float height)
 {
+    zc_log_debug("ui init");
+
     text_init();                    // DESTROY 0
     ui_manager_init(width, height); // DESTROY 1
 
@@ -242,7 +242,7 @@ void ui_screenshot(uint32_t time)
 	if (ui.cursor)
 	{
 	    ui_manager_remove(ui.cursor);
-	    ui_manager_render(time);
+	    ui_manager_render(time, NULL);
 	    ui_manager_add_to_top(ui.cursor);
 	}
 
@@ -252,7 +252,7 @@ void ui_screenshot(uint32_t time)
 	char*      path    = path_new_append(config_get("lib_path"), name);    // REL 2
 	bm_rgba_t* flipped = bm_rgba_new_flip_y(screen);                       // REL 3
 
-	coder_write_png(path, flipped);
+	/* coder_write_png(path, flipped); */
 
 	REL(flipped); // REL 3
 	REL(name);    // REL 2

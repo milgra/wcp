@@ -12,7 +12,7 @@
 
 int      ui_generator_init(int, int);
 void     ui_generator_destroy();
-void     ui_generator_render(uint32_t);
+void     ui_generator_render(uint32_t, bm_rgba_t* bm);
 void     ui_generator_use(vec_t* views);
 void     ui_generator_resize(int width, int height);
 uint32_t ui_generate_create_texture();
@@ -25,6 +25,8 @@ void     ui_generator_rerender();
 #include "ui_compositor.c"
 #include "view.c"
 #include "zc_channel.c"
+#include "zc_draw.c"
+#include "zc_log.c"
 #include "zc_map.c"
 #include "zc_vector.c"
 #include <pthread.h>
@@ -195,7 +197,7 @@ void ui_generator_resize(int width, int height)
     }
 }
 
-void ui_generator_render(uint32_t time)
+void ui_generator_render(uint32_t time, bm_rgba_t* bm)
 {
     int reset_texmap = 0;
 
@@ -250,20 +252,27 @@ void ui_generator_render(uint32_t time)
 
 	    view->texture.alpha_changed = 0;
 	}
-    }
 
-    ui_compositor_render(time, uig.width, uig.height, uig.wpwr, uig.hpwr);
+	// draw view into bitmap
 
-    if (reset_texmap || uig.grow)
-    {
-	printf("texture is full in generator render loop, forcing reset, grow : %i\n", uig.grow);
-	if (uig.grow)
+	if (view->texture.bitmap)
 	{
-	    uig.texmapsize *= 2;
-	    ui_generator_resize_texmap(uig.texmapsize);
+	    gfx_insert(bm, view->texture.bitmap, view->frame.global.x, view->frame.global.y);
 	}
-	ui_generator_resend_views();
     }
+
+    /* ui_compositor_render(time, uig.width, uig.height, uig.wpwr, uig.hpwr); */
+
+    /* if (reset_texmap || uig.grow) */
+    /* { */
+    /* 	printf("texture is full in generator render loop, forcing reset, grow : %i\n", uig.grow); */
+    /* 	if (uig.grow) */
+    /* 	{ */
+    /* 	    uig.texmapsize *= 2; */
+    /* 	    ui_generator_resize_texmap(uig.texmapsize); */
+    /* 	} */
+    /* 	ui_generator_resend_views(); */
+    /* } */
 }
 
 int ui_generator_workloop(void* mypointer)

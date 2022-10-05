@@ -32,7 +32,6 @@ void viewgen_type_apply(vec_t* views, cb_t* callback)
 	}
 	else if (view->style.background_image)
 	{
-	    printf("ADDING BACK IMAGE\n");
 	    tg_css_add(view);
 	}
 

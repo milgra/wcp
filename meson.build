@@ -6,9 +6,12 @@ project(
   default_options: ['c_std=gnu99']
 )
 
+pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'ocp'
+
 add_project_arguments(
   [
-    '-DWCPVERSION="@0@"'.format(meson.project_version()),
+    '-DPKG_DATADIR="' + pkg_datadir + '"',
+    '-DWCP_VERSION="@0@"'.format(meson.project_version()),
   ],
   language : 'c'
 )
@@ -60,6 +63,7 @@ wcp_deps = [
 ]
 
 wcp_inc = include_directories('src/wcp',
+			      'src/wcp/ui',
 			      'src/wcp/utils',
 			      'src/zen_core',
 			      'src/zen_math',
@@ -72,6 +76,9 @@ wcp_inc = include_directories('src/wcp',
 wcp_src = [    'src/wcp/wcp.c',
 	       'src/wcp/wl_connector.c',
 	       'src/wcp/wm_event.c',
+	       'src/wcp/config.c',
+
+	       'src/wcp/ui/ui.c',
 
 	       'src/wcp/utils/bm_rgba_util.c',
 	       'src/wcp/utils/cstr_util.c',

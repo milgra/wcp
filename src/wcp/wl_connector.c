@@ -1,7 +1,10 @@
 #ifndef wl_connector_h
 #define wl_connector_h
 
-void wl_connector_init(int w, int h);
+#include "zc_bm_rgba.c"
+#include <stdint.h>
+
+void wl_connector_init(int w, int h, void (*render)(uint32_t, bm_rgba_t*));
 
 #endif
 
@@ -76,6 +79,8 @@ struct wlc_t
     int  win_width;
     int  win_height;
     bool running;
+
+    void (*render)(uint32_t, bm_rgba_t*);
 } wlc = {0};
 
 /* ***WL OUTPUT EVENTS*** */
@@ -477,7 +482,9 @@ void wl_connector_draw()
     uint8_t*   argb   = wlc.shm_data;
     bm_rgba_t* bitmap = bm_rgba_new(width, height);
 
-    gfx_rect(bitmap, 0, 0, width, height, 0xFF0000FF, 0);
+    gfx_rect(bitmap, 0, 0, width, height, 0x000000FF, 0);
+
+    (*wlc.render)(0, bitmap);
 
     for (int i = 0; i < bitmap->size; i += 4)
     {
@@ -512,12 +519,13 @@ struct zwlr_layer_surface_v1_listener layer_surface_listener = {
     .closed    = wl_connector_layer_surface_closed,
 };
 
-void wl_connector_init(int w, int h)
+void wl_connector_init(int w, int h, void (*render)(uint32_t, bm_rgba_t*))
 {
     zc_log_debug("init %i %i", w, h);
 
     wlc.win_width  = w;
     wlc.win_height = h;
+    wlc.render     = render;
 
     wlc.display = wl_display_connect(NULL);
     if (wlc.display)
