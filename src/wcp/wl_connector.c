@@ -210,7 +210,7 @@ void wl_connector_pointer_handle_leave(void* data, struct wl_pointer* wl_pointer
 }
 void wl_connector_pointer_handle_motion(void* data, struct wl_pointer* wl_pointer, uint time, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
-    zc_log_debug("pointer handle motion");
+    zc_log_debug("pointer handle motion %f %f", wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
 }
 void wl_connector_pointer_handle_button(void* data, struct wl_pointer* wl_pointer, uint serial, uint time, uint button, uint state)
 {
