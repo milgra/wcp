@@ -13,13 +13,20 @@
 #include <time.h>
 #include <unistd.h>
 
+int inited = 0;
+
 void render(uint32_t time, bm_rgba_t* bm)
 {
-    printf("RENDER\n");
+    if (inited < 1) inited += 1;
+    else if (inited == 1)
+    {
+	ui_post_render_init();
+	inited += 1;
+    }
 
-    gfx_rect(bm, 100, 100, 40, 40, 0x00ff00ff, 0);
-
+    zc_time(NULL);
     ui_manager_render(0, bm);
+    zc_time("ui render");
 }
 
 int main(int argc, char* argv[])
@@ -134,12 +141,12 @@ int main(int argc, char* argv[])
     if (rep_path) config_set("rep_path", rep_path);
 
     zc_time(NULL);
-    ui_init(300, 200); // DESTROY 3
+    ui_init(300, 225); // DESTROY 3
     zc_time("ui init");
 
     /* ui_manager_event(ev); */
 
-    wl_connector_init(300, 200, render);
+    wl_connector_init(300, 225, render);
 
     /* show in wayland buffer */
 

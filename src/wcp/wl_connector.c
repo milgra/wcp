@@ -482,7 +482,7 @@ void wl_connector_draw()
     uint8_t*   argb   = wlc.shm_data;
     bm_rgba_t* bitmap = bm_rgba_new(width, height);
 
-    gfx_rect(bitmap, 0, 0, width, height, 0x000000FF, 0);
+    /* gfx_rect(bitmap, 0, 0, width, height, 0x000000FF, 0); */
 
     (*wlc.render)(0, bitmap);
 
@@ -577,18 +577,19 @@ void wl_connector_init(int w, int h, void (*render)(uint32_t, bm_rgba_t*))
 		wlc.layer_surface,
 		ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
 
-	    zc_log_debug("anchor and size set");
+	    zwlr_layer_surface_v1_set_margin(
+		wlc.layer_surface,
+		10,
+		14,
+		20,
+		20);
 
 	    zwlr_layer_surface_v1_add_listener(wlc.layer_surface, &layer_surface_listener, NULL);
-
 	    zc_log_debug("layer surface listener added");
 
 	    wl_surface_set_buffer_scale(wlc.surface, wlc.monitor->scale);
 
-	    zc_log_debug("scaling set");
-
 	    wl_surface_commit(wlc.surface);
-
 	    wl_display_roundtrip(wlc.display);
 
 	    /* zwlr_layer_surface_v1_set_keyboard_interactivity(panel->surface.layer_surface, true); */
@@ -597,8 +598,6 @@ void wl_connector_init(int w, int h, void (*render)(uint32_t, bm_rgba_t*))
 	    wl_surface_commit(wlc.surface);
 
 	    // first draw
-
-	    wl_connector_draw();
 
 	    struct pollfd fds[] = {
 		{wl_display_get_fd(wlc.display), POLLIN}};
@@ -609,6 +608,12 @@ void wl_connector_init(int w, int h, void (*render)(uint32_t, bm_rgba_t*))
 
 	    wlc.running = true;
 
+	    zc_log_debug("starting loop");
+
+	    wl_connector_draw();
+
+	    int timeout = 100;
+
 	    while (wlc.running)
 	    {
 		if (wl_display_flush(wlc.display) < 0)
@@ -618,10 +623,9 @@ void wl_connector_init(int w, int h, void (*render)(uint32_t, bm_rgba_t*))
 		    break;
 		}
 
-		if (poll(fds, nfds, -1) < 0)
+		if (poll(fds, nfds, timeout) < 0)
 		{
-		    if (errno == EAGAIN)
-			continue;
+		    if (errno == EAGAIN) continue;
 		    break;
 		}
 
@@ -631,6 +635,12 @@ void wl_connector_init(int w, int h, void (*render)(uint32_t, bm_rgba_t*))
 		    {
 			wlc.running = false;
 		    }
+		}
+		else
+		{
+		    printf("timeout");
+		    wl_connector_draw();
+		    timeout = -1;
 		}
 	    }
 

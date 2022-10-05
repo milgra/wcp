@@ -581,27 +581,37 @@ void gfx_blend_bitmap(bm_rgba_t* bm, bm_rgba_t* sbm, int sx, int sy)
 		int sb = sdata[si + 2];
 		int sa = sdata[si + 3];
 
-		int dr = data[i];
-		int dg = data[i + 1];
-		int db = data[i + 2];
-		int da = data[i + 3];
-
-		int a = sa + da * (255 - sa) / 255;
-		int r = (sr * sa / 255 + dr * da / 255 * (255 - sa) / 255);
-		int g = (sg * sa / 255 + dg * da / 255 * (255 - sa) / 255);
-		int b = (sb * sa / 255 + db * da / 255 * (255 - sa) / 255);
-
-		if (a > 0)
+		if (sa == 255)
 		{
-		    r = r * 255 / a;
-		    g = g * 255 / a;
-		    b = b * 255 / a;
+		    data[i]     = (uint8_t) (sr & 0xFF);
+		    data[i + 1] = (uint8_t) (sg & 0xFF);
+		    data[i + 2] = (uint8_t) (sb & 0xFF);
+		    data[i + 3] = (uint8_t) (sa & 0xFF);
 		}
+		else
+		{
+		    int dr = data[i];
+		    int dg = data[i + 1];
+		    int db = data[i + 2];
+		    int da = data[i + 3];
 
-		data[i]     = (uint8_t) (r & 0xFF);
-		data[i + 1] = (uint8_t) (g & 0xFF);
-		data[i + 2] = (uint8_t) (b & 0xFF);
-		data[i + 3] = (uint8_t) (a & 0xFF);
+		    int a = sa + da * (255 - sa) / 255;
+		    int r = (sr * sa / 255 + dr * da / 255 * (255 - sa) / 255);
+		    int g = (sg * sa / 255 + dg * da / 255 * (255 - sa) / 255);
+		    int b = (sb * sa / 255 + db * da / 255 * (255 - sa) / 255);
+
+		    if (a > 0)
+		    {
+			r = r * 255 / a;
+			g = g * 255 / a;
+			b = b * 255 / a;
+		    }
+
+		    data[i]     = (uint8_t) (r & 0xFF);
+		    data[i + 1] = (uint8_t) (g & 0xFF);
+		    data[i + 2] = (uint8_t) (b & 0xFF);
+		    data[i + 3] = (uint8_t) (a & 0xFF);
+		}
 	    }
 	}
     }

@@ -257,7 +257,7 @@ void ui_generator_render(uint32_t time, bm_rgba_t* bm)
 
 	if (view->texture.bitmap)
 	{
-	    gfx_insert(bm, view->texture.bitmap, view->frame.global.x, view->frame.global.y);
+	    gfx_blend_bitmap(bm, view->texture.bitmap, view->frame.global.x, view->frame.global.y);
 	}
     }
 
