@@ -61,8 +61,9 @@ wcp_inc = include_directories('src/wcp',
 
 wcp_src = ['src/wcp/wcp.c',
 	   'src/wcp/wl_connector.c',
-	   'src/zen_core/zc_memory.c',
 	   'src/zen_core/zc_bm_rgba.c',
+	   'src/zen_core/zc_log.c',
+	   'src/zen_core/zc_memory.c',
 	   'src/zen_gfx/zc_draw.c'
 ] + protos_src + protos_headers
 
