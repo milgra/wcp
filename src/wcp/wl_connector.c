@@ -53,6 +53,7 @@ struct wlc_t
 
     struct wl_compositor* compositor; // active compositor
     struct wl_keyboard*   keyboard;   // active keyboard for seat
+    struct wl_pointer*    pointer;    // active pointer for seat
     struct wl_seat*       seat;       // active seat
 
     struct wl_surface* surface;  // surface for window
@@ -197,14 +198,74 @@ struct zxdg_output_v1_listener xdg_output_listener = {
     .description      = wl_connector_xdg_output_handle_description,
 };
 
+/* *** POINTER EVENTS *** */
+
+void wl_connector_pointer_handle_enter(void* data, struct wl_pointer* wl_pointer, uint serial, struct wl_surface* surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
+{
+    zc_log_debug("pointer handle enter");
+}
+void wl_connector_pointer_handle_leave(void* data, struct wl_pointer* wl_pointer, uint serial, struct wl_surface* surface)
+{
+    zc_log_debug("pointer handle leave");
+}
+void wl_connector_pointer_handle_motion(void* data, struct wl_pointer* wl_pointer, uint time, wl_fixed_t surface_x, wl_fixed_t surface_y)
+{
+    zc_log_debug("pointer handle motion");
+}
+void wl_connector_pointer_handle_button(void* data, struct wl_pointer* wl_pointer, uint serial, uint time, uint button, uint state)
+{
+    zc_log_debug("pointer handle button");
+}
+void wl_connector_pointer_handle_axis(void* data, struct wl_pointer* wl_pointer, uint time, uint axis, wl_fixed_t value)
+{
+    zc_log_debug("pointer handle axis");
+}
+void wl_connector_pointer_handle_frame(void* data, struct wl_pointer* wl_pointer)
+{
+    zc_log_debug("pointer handle frame");
+}
+void wl_connector_pointer_handle_axis_source(void* data, struct wl_pointer* wl_pointer, uint axis_source)
+{
+    zc_log_debug("pointer handle axis source");
+}
+void wl_connector_pointer_handle_axis_stop(void* data, struct wl_pointer* wl_pointer, uint time, uint axis)
+{
+    zc_log_debug("pointer handle axis stop");
+}
+void wl_connector_pointer_handle_axis_discrete(void* data, struct wl_pointer* wl_pointer, uint axis, int discrete)
+{
+    zc_log_debug("pointer handle axis discrete");
+}
+
+struct wl_pointer_listener pointer_listener =
+    {
+	.enter         = wl_connector_pointer_handle_enter,
+	.leave         = wl_connector_pointer_handle_leave,
+	.motion        = wl_connector_pointer_handle_motion,
+	.button        = wl_connector_pointer_handle_button,
+	.axis          = wl_connector_pointer_handle_axis,
+	.frame         = wl_connector_pointer_handle_frame,
+	.axis_source   = wl_connector_pointer_handle_axis_source,
+	.axis_stop     = wl_connector_pointer_handle_axis_stop,
+	.axis_discrete = wl_connector_pointer_handle_axis_discrete,
+};
+
 /* ***SEAT EVENTS*** */
 
-static void wl_connector_seat_handle_capabilities(void* data, struct wl_seat* wl_seat, enum wl_seat_capability caps)
+static void
+wl_connector_seat_handle_capabilities(void* data, struct wl_seat* wl_seat, enum wl_seat_capability caps)
 {
     zc_log_debug("seat handle capabilities %i", caps);
     if (caps & WL_SEAT_CAPABILITY_KEYBOARD)
     {
 	wlc.keyboard = wl_seat_get_keyboard(wl_seat);
+	zc_log_debug("added keyboard");
+    }
+    if (caps & WL_SEAT_CAPABILITY_POINTER)
+    {
+	wlc.pointer = wl_seat_get_pointer(wl_seat);
+	wl_pointer_add_listener(wlc.pointer, &pointer_listener, NULL);
+	zc_log_debug("added pointer");
     }
 }
 
