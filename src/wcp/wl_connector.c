@@ -51,7 +51,7 @@ struct monitor_info
     int32_t logical_height;
     double  scale;
     int     index;
-    char    name[MAX_MONITOR_NAME_LEN];
+    char    name[MAX_MONITOR_NAME_LEN + 1];
 
     enum wl_output_subpixel subpixel;
     struct zxdg_output_v1*  xdg_output;
@@ -623,6 +623,9 @@ void wl_show()
 	wl_display_flush(wlc.display);
 
 	wl_connector_draw();
+
+	ev_t event = {.type = EV_WINDOW_SHOW};
+	(*wlc.update)(event);
     }
 }
 
@@ -759,11 +762,18 @@ void wl_connector_init(
 			break;
 		    }
 
-		    if (state == 2)
+		    if (state == 3)
 		    {
 			// exit
 			wlc.running = false;
 			break;
+		    }
+
+		    if (state == 2)
+		    {
+			// toggle
+			if (wlc.visible) wl_hide();
+			else wl_show();
 		    }
 
 		    if (state == 1)

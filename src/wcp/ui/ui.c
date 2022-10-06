@@ -5,6 +5,7 @@
 
 void ui_init(float width, float height);
 void ui_destroy();
+void ui_load_values();
 
 void ui_add_cursor();
 void ui_update_cursor(r2_t frame);
@@ -164,6 +165,33 @@ void on_songlist_event(ui_table_t* table, ui_table_event event, void* userdata)
     }
 }
 
+void ui_load_values()
+{
+    for (int index = 0; index < ui.view_list->length; index++)
+    {
+	view_t* view = ui.view_list->data[index];
+
+	if (view->script)
+	{
+	    char* script  = path_new_append(config_get("res_path"), "script/");
+	    char* command = cstr_new_format(200, "bash %s%s", script, view->script);
+	    char* result  = cstr_new_cstring("");
+	    ui_execute_command(command, &result);
+
+	    if (strcmp(view->type, "label") == 0)
+	    {
+		textstyle_t ts = ui_util_gen_textstyle(view);
+		tg_text_set(view, result, ts);
+	    }
+	    if (strcmp(view->type, "slider") == 0)
+	    {
+		float ratio = (float) atoi(result) / 100.0;
+		vh_slider_set(view, ratio);
+	    }
+	}
+    }
+}
+
 void ui_init(float width, float height)
 {
     zc_log_debug("ui init");
@@ -192,31 +220,7 @@ void ui_init(float width, float height)
 
     /* load values from scripts */
 
-    for (int index = 0; index < ui.view_list->length; index++)
-    {
-	view_t* view = ui.view_list->data[index];
-
-	if (view->script)
-	{
-	    char* script  = path_new_append(config_get("res_path"), "script/");
-	    char* command = cstr_new_format(200, "bash %s%s", script, view->script);
-	    char* result  = cstr_new_cstring("");
-	    ui_execute_command(command, &result);
-
-	    printf("result for %s : %s\n", command, result);
-
-	    if (strcmp(view->type, "label") == 0)
-	    {
-		textstyle_t ts = ui_util_gen_textstyle(view);
-		tg_text_set(view, result, ts);
-	    }
-	    if (strcmp(view->type, "slider") == 0)
-	    {
-		float ratio = (float) atoi(result) / 100.0;
-		vh_slider_set(view, ratio);
-	    }
-	}
-    }
+    ui_load_values();
 
     // show texture map for debug
 

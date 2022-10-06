@@ -15,6 +15,8 @@
 
 void update(ev_t ev)
 {
+    if (ev.type == EV_WINDOW_SHOW) ui_load_values();
+
     ui_manager_event(ev);
     wl_connector_draw();
 }
@@ -38,13 +40,13 @@ int main(int argc, char* argv[])
 	   "by Milan Toth(www.milgra.com)\n"
 	   "If you like this app try :\n"
 	   "- Sway Oveview ( github.com/milgra/sov )\n"
-	   "- Multimedia File Manager (github.com/milgra/wcp)\n"
 	   "- Visual Music Player (github.com/milgra/vmp)\n"
+	   "- Multimedia File Manager (github.com/milgra/wcp)\n"
 	   "- SwayOS (swayos.github.io)\n"
 	   "Games :\n"
+	   "- Brawl (github.com/milgra/brawl)\n"
 	   "- Cortex ( github.com/milgra/cortex )\n"
-	   "- Termite (github.com/milgra/termite)\n"
-	   "- Brawl (github.com/milgra/brawl)\n\n");
+	   "- Termite (github.com/milgra/termite)\n\n");
 
     const char* usage =
 	"Usage: wcp [options]\n"
@@ -115,7 +117,6 @@ int main(int argc, char* argv[])
     // init config
 
     config_init(); // DESTROY 0
-
     config_set("res_path", res_path);
 
     // init non-configurable defaults
@@ -128,13 +129,18 @@ int main(int argc, char* argv[])
     config_set("html_path", html_path);
     config_set("scr_path", scr_path);
 
-    zc_time(NULL);
-    ui_init(300, 225); // DESTROY 3
-    zc_time("ui init");
+    int width  = 300;
+    int height = 300;
+    if (frm_par != NULL)
+    {
+	width      = atoi(frm_par);
+	char* next = strstr(frm_par, "x");
+	height     = atoi(next + 1);
+    }
 
-    /* ui_manager_event(ev); */
+    ui_init(width, height); // DESTROY 3
 
-    wl_connector_init(300, 225, update, render, destroy);
+    wl_connector_init(width, height, update, render, destroy);
 
     /* show in wayland buffer */
 

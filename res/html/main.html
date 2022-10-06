@@ -2,7 +2,7 @@
   <div id="mainflex" class="fullscaleview colflex margin5">
 
   <div id="volumerow" class="row">
-    <div id="mutebtn" class="button0" type="button" script="mute.sh">
+    <div id="mutebtn" class="button0" type="button" script="open-audio.sh">
       <div id="muteicon"/>
     </div>
     <div id="volumegap" class="vertgap10"/>
@@ -14,11 +14,11 @@
   <div id="horgap0" class="horgap10"/>
 
   <div id="backlightrow" class="row">
-    <div id="backlightbtn" class="button0" type="button" script="displays.sh">
+    <div id="backlightbtn" class="button0" type="button" script="open-displays.sh">
       <div id="backlighticon"/>
     </div>
     <div id="lcdgap" class="vertgap10"/>
-    <div id="lcdslider" class="slider"  type="slider" script="backlight.sh">
+    <div id="lcdslider" class="slider"  type="slider" script="brightness.sh">
       <div id="lcdsliderbar" class="sliderbar"/>
     </div>
   </div>
@@ -26,48 +26,28 @@
   <div id="horgap1" class="horgap10"/>
 
   <div id="wifirow" class="row">
-    <div id="wifibtn" class="button0" type="button" script="wifiselector.sh">
+    <div id="wifibtn" class="button0" type="button" script="open-wifi.sh">
       <div id="wifiicon"/>
     </div>
     <div id="wifigap" class="vertgap10"/>
     <div id="wifilabelback" class="labelback">
-      <div id="wifilabel" class="label" type="label" script="wifi.sh"/>
+      <div id="wifilabel" class="label" type="label" script="wifi-label.sh"/>
     </div>
   </div>
 
   <div id="horgap2" class="horgap10"/>
       
   <div id="bluetoothrow" class="row">
-    <div id="bluetoothbtn" class="button0" type="button" script="btoothselector.sh">
+    <div id="bluetoothbtn" class="button0" type="button" script="open-bluetooth.sh">
       <div id="bluetoothicon"/>
     </div>
     <div id="btoothgap" class="vertgap10"/>
     <div id="btoothlabelbck" class="labelback">
-      <div id="btoothlabel" class="label" type="label" script="bluetooth.sh"/>
+      <div id="btoothlabel" class="label" type="label" script="bluetooth-label.sh"/>
     </div>
   </div>
 
   <div id="horgap3" class="horgap10"/>
-
-  <div id="vmprow" class="row">
-    <div id="prevbtn" class="button0" type="button" script="vmpprev.sh">
-      <div id="previcon"/>
-    </div>
-    <div id="vmpgap0" class="vertgap10"/>
-    <div id="playbtn" class="button0" type="button" script="vmpplay.sh">
-      <div id="playicon"/>
-    </div>
-    <div id="vmpgap1" class="vertgap10"/>
-    <div id="nextbtn" class="button0" type="button" script="vmpnext.sh">
-      <div id="nexticon"/>
-    </div>
-    <div id="vmpgap2" class="vertgap10"/>
-    <div id="posslider" class="slider" type="slider" script="vmpseek.sh">
-      <div id="possliderbar" class="sliderbar"/>
-    </div>
-  </div>
-  
-  <div id="horgap4" class="horgap10"/>
 
   <div id="sessionrow" class="rowflex">
     <div id="lockbtn" class="button" type="button" script="lock.sh">

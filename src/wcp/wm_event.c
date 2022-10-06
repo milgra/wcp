@@ -18,6 +18,7 @@ enum evtype
     EV_KDOWN,
     EV_KUP,
     EV_TEXT,
+    EV_WINDOW_SHOW,
 };
 
 typedef struct _ev_t
