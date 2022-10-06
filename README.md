@@ -1,6 +1,6 @@
 # wcp - Wayland Control Panel
 
-Script-driven control panel/system menu for Wayland compositors. Made for SwayOS
+Script-driven control panel/system menu for Wayland compositors.
 
 Wayland Control Panel was made for SwayOS (https://swayos.github.io)
 
@@ -9,7 +9,7 @@ Wayland Control Panel was made for SwayOS (https://swayos.github.io)
 ## Features ##
 
 - content and style fully configurable via html, css and shell scripts
-- super lightweight   
+- super lightweight ( no gtk&qt )
 
 ## Installation
 
