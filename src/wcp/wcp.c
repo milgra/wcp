@@ -13,8 +13,6 @@
 #include <time.h>
 #include <unistd.h>
 
-int inited = 0;
-
 void update(ev_t ev)
 {
     ui_manager_event(ev);
@@ -23,13 +21,6 @@ void update(ev_t ev)
 
 void render(uint32_t time, bm_rgba_t* bm)
 {
-    if (inited < 1) inited += 1;
-    else if (inited == 1)
-    {
-	ui_post_render_init();
-	inited += 1;
-    }
-
     ui_manager_render(0, bm);
 }
 

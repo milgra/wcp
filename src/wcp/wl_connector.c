@@ -87,6 +87,7 @@ struct wlc_t
     int  win_width;
     int  win_height;
     bool running;
+    int  visible;
 
     void (*update)(ev_t);
     void (*render)(uint32_t, bm_rgba_t*);
@@ -560,6 +561,87 @@ struct zwlr_layer_surface_v1_listener layer_surface_listener = {
     .closed    = wl_connector_layer_surface_closed,
 };
 
+bool wl_parse_input(const char* input_buffer, unsigned long* state)
+{
+    char *input_ptr, *newline_position;
+
+    newline_position = strchr(input_buffer, '\n');
+    if (newline_position == NULL) { return false; }
+
+    if (newline_position == input_buffer) { return false; }
+
+    *state = strtoul(input_buffer, &input_ptr, 10);
+    if (input_ptr == newline_position) { return true; }
+    else
+	return false;
+}
+
+void wl_show()
+{
+    if (!wlc.visible)
+    {
+	wlc.visible = 1;
+
+	wlc.surface = wl_compositor_create_surface(wlc.compositor);
+
+	wlc.layer_surface = zwlr_layer_shell_v1_get_layer_surface(
+	    wlc.layer_shell,
+	    wlc.surface,
+	    wlc.monitor->wl_output,
+	    ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
+	    "wcp");
+
+	zwlr_layer_surface_v1_set_size(
+	    wlc.layer_surface,
+	    wlc.win_width,
+	    wlc.win_height);
+
+	zwlr_layer_surface_v1_set_anchor(
+	    wlc.layer_surface,
+	    ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
+
+	zwlr_layer_surface_v1_set_margin(
+	    wlc.layer_surface,
+	    10,
+	    14,
+	    20,
+	    20);
+
+	zwlr_layer_surface_v1_add_listener(wlc.layer_surface, &layer_surface_listener, NULL);
+	zc_log_debug("layer surface listener added");
+
+	wl_surface_set_buffer_scale(wlc.surface, wlc.monitor->scale);
+
+	wl_surface_commit(wlc.surface);
+	wl_display_roundtrip(wlc.display);
+
+	/* zwlr_layer_surface_v1_set_keyboard_interactivity(panel->surface.layer_surface, true); */
+
+	wl_surface_attach(wlc.surface, wlc.buffer, 0, 0);
+	wl_surface_commit(wlc.surface);
+
+	wl_display_flush(wlc.display);
+
+	wl_connector_draw();
+    }
+}
+
+void wl_hide()
+{
+    if (wlc.visible)
+    {
+	zwlr_layer_surface_v1_destroy(wlc.layer_surface);
+	wl_surface_destroy(wlc.surface);
+
+	wlc.surface       = NULL;
+	wlc.layer_surface = NULL;
+
+	wl_display_roundtrip(wlc.display);
+
+	wlc.visible = 0;
+    }
+}
+
 void wl_connector_init(
     int w,
     int h,
@@ -593,10 +675,6 @@ void wl_connector_init(
 
 	if (wlc.compositor)
 	{
-	    wlc.surface = wl_compositor_create_surface(wlc.compositor);
-
-	    zc_log_debug("surface created");
-
 	    wlc.monitor = wlc.monitors[0];
 
 	    zc_log_debug("monitor selected");
@@ -607,60 +685,23 @@ void wl_connector_init(
 
 	    if (!wlc.layer_shell) zc_log_debug("Compositor does not implement wlr-layer-shell protocol.");
 
-	    wlc.layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-		wlc.layer_shell,
-		wlc.surface,
-		wlc.monitor->wl_output,
-		ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
-		"wcp");
-
-	    zc_log_debug("layer surface crated");
-
-	    zwlr_layer_surface_v1_set_size(
-		wlc.layer_surface,
-		wlc.win_width,
-		wlc.win_height);
-
-	    zwlr_layer_surface_v1_set_anchor(
-		wlc.layer_surface,
-		ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP);
-
-	    zwlr_layer_surface_v1_set_margin(
-		wlc.layer_surface,
-		10,
-		14,
-		20,
-		20);
-
-	    zwlr_layer_surface_v1_add_listener(wlc.layer_surface, &layer_surface_listener, NULL);
-	    zc_log_debug("layer surface listener added");
-
-	    wl_surface_set_buffer_scale(wlc.surface, wlc.monitor->scale);
-
-	    wl_surface_commit(wlc.surface);
-	    wl_display_roundtrip(wlc.display);
-
-	    /* zwlr_layer_surface_v1_set_keyboard_interactivity(panel->surface.layer_surface, true); */
-
-	    wl_surface_attach(wlc.surface, wlc.buffer, 0, 0);
-	    wl_surface_commit(wlc.surface);
-
 	    // first draw
 
-	    struct pollfd fds[] = {
-		{wl_display_get_fd(wlc.display), POLLIN}};
+	    struct pollfd fds[2] = {
+		{.fd     = wl_display_get_fd(wlc.display),
+		 .events = POLLIN},
+		{.fd     = STDIN_FILENO,
+		 .events = POLLIN}};
 
 	    const int nfds = sizeof(fds) / sizeof(*fds);
-
-	    wl_display_flush(wlc.display);
 
 	    wlc.running = true;
 
 	    zc_log_debug("starting loop");
 
-	    wl_connector_draw();
-
-	    int timeout = 100;
+	    char*         result    = NULL;
+	    char          buffer[3] = {0};
+	    unsigned long state     = 0;
 
 	    while (wlc.running)
 	    {
@@ -671,7 +712,7 @@ void wl_connector_init(
 		    break;
 		}
 
-		if (poll(fds, nfds, timeout) < 0)
+		if (poll(fds, nfds, -1) < 0)
 		{
 		    if (errno == EAGAIN) continue;
 		    break;
@@ -679,16 +720,63 @@ void wl_connector_init(
 
 		if (fds[0].revents & POLLIN)
 		{
+		    // wayland events
 		    if (wl_display_dispatch(wlc.display) < 0)
 		    {
 			wlc.running = false;
 		    }
 		}
-		else
+		else if (fds[1].revents & POLLIN)
 		{
-		    printf("timeout");
-		    wl_connector_draw();
-		    timeout = -1;
+		    // stdin events
+		    if (!(fds[1].revents & POLLIN))
+		    {
+			zc_log_error("STDIN unexpectedly closed, revents = %hd", fds[1].revents);
+			wlc.running = false;
+			break;
+		    }
+
+		    result = fgets(buffer, 3, stdin);
+
+		    if (feof(stdin))
+		    {
+			zc_log_info("Received EOF");
+			wlc.running = false;
+			break;
+		    }
+
+		    if (result == NULL)
+		    {
+			zc_log_error("fgets() failed: %s", strerror(errno));
+			wlc.running = false;
+			break;
+		    }
+
+		    if (!wl_parse_input(buffer, &state))
+		    {
+			zc_log_error("Received invalid input");
+			wlc.running = false;
+			break;
+		    }
+
+		    if (state == 2)
+		    {
+			// exit
+			wlc.running = false;
+			break;
+		    }
+
+		    if (state == 1)
+		    {
+			// show
+			wl_show();
+		    }
+
+		    if (state == 0)
+		    {
+			// hide
+			wl_hide();
+		    }
 		}
 	    }
 

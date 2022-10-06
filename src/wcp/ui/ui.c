@@ -4,7 +4,6 @@
 #include "view.c"
 
 void ui_init(float width, float height);
-void ui_post_render_init();
 void ui_destroy();
 
 void ui_add_cursor();
@@ -191,20 +190,6 @@ void ui_init(float width, float height)
     view_set_frame(ui.view_base, (r2_t){0.0, 0.0, (float) width, (float) height});
     ui_manager_add(ui.view_base);
 
-    // show texture map for debug
-
-    /* view_t* texmap       = view_new("texmap", ((r2_t){0, 0, 150, 150})); */
-    /* texmap->needs_touch  = 0; */
-    /* texmap->exclude      = 0; */
-    /* texmap->texture.full = 1; */
-    /* texmap->style.right  = 0; */
-    /* texmap->style.top    = 0; */
-
-    /* ui_manager_add(texmap); */
-}
-
-void ui_post_render_init()
-{
     /* load values from scripts */
 
     for (int index = 0; index < ui.view_list->length; index++)
@@ -232,6 +217,17 @@ void ui_post_render_init()
 	    }
 	}
     }
+
+    // show texture map for debug
+
+    /* view_t* texmap       = view_new("texmap", ((r2_t){0, 0, 150, 150})); */
+    /* texmap->needs_touch  = 0; */
+    /* texmap->exclude      = 0; */
+    /* texmap->texture.full = 1; */
+    /* texmap->style.right  = 0; */
+    /* texmap->style.top    = 0; */
+
+    /* ui_manager_add(texmap); */
 }
 
 void ui_destroy()
