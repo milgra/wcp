@@ -6,7 +6,7 @@ project(
   default_options: ['c_std=gnu99']
 )
 
-pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'ocp'
+pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'wcp'
 
 add_project_arguments(
   [
@@ -18,6 +18,7 @@ add_project_arguments(
 
 cc = meson.get_compiler('c')
 
+math = cc.find_library('m',static:false)
 png = cc.find_library('png',static:false)
 freetype = cc.find_library('freetype',static:false)
 wayland_client      = dependency('wayland-client')
@@ -59,7 +60,8 @@ wcp_deps = [
   wayland_client,
   xkbcommon,
   freetype,
-  png
+  png,
+  math
 ]
 
 wcp_inc = include_directories('src/wcp',
