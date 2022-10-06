@@ -155,3 +155,23 @@ executable('wcp',
 	     include_directories: [wcp_inc],
 	    dependencies: wcp_deps,
 	    install: true)
+
+install_data('res/html/main.html', install_dir : pkg_datadir / 'html' )
+install_data('res/html/main.css', install_dir : pkg_datadir / 'html' )
+install_data('res/img/bluetooth.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/brightness.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/exit.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/lock.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/next.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/pause.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/prev.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/reboot.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/shutdown.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/speaker.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/suspend.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/wifi.png', install_dir : pkg_datadir / 'img' )
+install_data('res/script/backlight.sh', install_dir : pkg_datadir / 'script' )
+install_data('res/script/bluetooth.sh', install_dir : pkg_datadir / 'script' )
+install_data('res/script/volume.sh', install_dir : pkg_datadir / 'script' )
+install_data('res/script/wifi.sh', install_dir : pkg_datadir / 'script' )
+install_data('res/script/wifiselector.sh', install_dir : pkg_datadir / 'script' )

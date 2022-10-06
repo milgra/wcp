@@ -94,6 +94,7 @@ int main(int argc, char* argv[])
     char* cfgdir_path = cfg_par ? path_new_normalize(cfg_par, wrk_path) : path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 8
     char* css_path    = path_new_append(res_path, "html/main.css");                                                            // REL 9
     char* html_path   = path_new_append(res_path, "html/main.html");                                                           // REL 10
+    char* scr_path    = path_new_append(res_path, "script");                                                                   // REL 10
     char* cfg_path    = path_new_append(cfgdir_path, "config.kvl");                                                            // REL 12
     char* per_path    = path_new_append(cfgdir_path, "state.kvl");                                                             // REL 13
 
@@ -106,6 +107,7 @@ int main(int argc, char* argv[])
     printf("state path    : %s\n", per_path);
     printf("css path      : %s\n", css_path);
     printf("html path     : %s\n", html_path);
+    printf("script path     : %s\n", scr_path);
     printf("\n");
 
     if (verbose) zc_log_inc_verbosity();
@@ -124,6 +126,7 @@ int main(int argc, char* argv[])
     config_set("per_path", per_path);
     config_set("css_path", css_path);
     config_set("html_path", html_path);
+    config_set("scr_path", scr_path);
 
     zc_time(NULL);
     ui_init(300, 225); // DESTROY 3
@@ -149,6 +152,7 @@ int main(int argc, char* argv[])
     REL(cfgdir_path); // REL 8
     REL(css_path);    // REL 9
     REL(html_path);   // REL 10
+    REL(scr_path);    // REL 10
     REL(cfg_path);    // REL 12
     REL(per_path);    // REL 13
 
