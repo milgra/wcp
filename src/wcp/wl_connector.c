@@ -1,10 +1,18 @@
 #ifndef wl_connector_h
 #define wl_connector_h
 
+#include "wm_event.c"
 #include "zc_bm_rgba.c"
 #include <stdint.h>
 
-void wl_connector_init(int w, int h, void (*render)(uint32_t, bm_rgba_t*));
+void wl_connector_init(
+    int w,
+    int h,
+    void (*update)(ev_t),
+    void (*render)(uint32_t, bm_rgba_t*),
+    void (*destroy)());
+
+void wl_connector_draw();
 
 #endif
 
@@ -80,7 +88,10 @@ struct wlc_t
     int  win_height;
     bool running;
 
+    void (*update)(ev_t);
     void (*render)(uint32_t, bm_rgba_t*);
+    void (*destroy)();
+
 } wlc = {0};
 
 /* ***WL OUTPUT EVENTS*** */
@@ -205,6 +216,11 @@ struct zxdg_output_v1_listener xdg_output_listener = {
 
 /* *** POINTER EVENTS *** */
 
+// TODO differentiate these by wl_pointer address
+int px   = 0;
+int py   = 0;
+int drag = 0;
+
 void wl_connector_pointer_handle_enter(void* data, struct wl_pointer* wl_pointer, uint serial, struct wl_surface* surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
     zc_log_debug("pointer handle enter");
@@ -215,11 +231,37 @@ void wl_connector_pointer_handle_leave(void* data, struct wl_pointer* wl_pointer
 }
 void wl_connector_pointer_handle_motion(void* data, struct wl_pointer* wl_pointer, uint time, wl_fixed_t surface_x, wl_fixed_t surface_y)
 {
-    zc_log_debug("pointer handle motion %f %f", wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y));
+    /* zc_log_debug("pointer handle motion %f %f", wl_fixed_to_double(surface_x), wl_fixed_to_double(surface_y)); */
+
+    ev_t event = {
+	.type = EV_MMOVE,
+	.drag = drag,
+	.x    = (int) wl_fixed_to_double(surface_x),
+	.y    = (int) wl_fixed_to_double(surface_y)};
+
+    px = event.x;
+    py = event.y;
+
+    (*wlc.update)(event);
 }
 void wl_connector_pointer_handle_button(void* data, struct wl_pointer* wl_pointer, uint serial, uint time, uint button, uint state)
 {
-    zc_log_debug("pointer handle button");
+    zc_log_debug("pointer handle button button %u state %u", button, state);
+
+    ev_t event = {.x = px, .y = py};
+
+    if (state)
+    {
+	event.type = EV_MDOWN;
+	drag       = 1;
+    }
+    else
+    {
+	event.type = EV_MUP;
+	drag       = 0;
+    }
+
+    (*wlc.update)(event);
 }
 void wl_connector_pointer_handle_axis(void* data, struct wl_pointer* wl_pointer, uint time, uint axis, wl_fixed_t value)
 {
@@ -421,7 +463,7 @@ void* wl_connector_shm_alloc(const int shmid, const size_t size)
 
 static void wl_connector_buffer_release(void* data, struct wl_buffer* wl_buffer)
 {
-    zc_log_debug("buffer release");
+    /* zc_log_debug("buffer release"); */
 }
 
 static const struct wl_buffer_listener buffer_listener = {
@@ -473,7 +515,6 @@ struct wl_buffer* wl_connector_create_buffer()
 
 void wl_connector_draw()
 {
-    zc_log_debug("draw");
     double factor = wlc.monitor->scale / ((double) wlc.monitor->physical_width / wlc.monitor->logical_width);
 
     int32_t width  = round_to_int(wlc.monitor->physical_width * factor);
@@ -519,13 +560,20 @@ struct zwlr_layer_surface_v1_listener layer_surface_listener = {
     .closed    = wl_connector_layer_surface_closed,
 };
 
-void wl_connector_init(int w, int h, void (*render)(uint32_t, bm_rgba_t*))
+void wl_connector_init(
+    int w,
+    int h,
+    void (*update)(ev_t),
+    void (*render)(uint32_t, bm_rgba_t*),
+    void (*destroy)())
 {
     zc_log_debug("init %i %i", w, h);
 
     wlc.win_width  = w;
     wlc.win_height = h;
     wlc.render     = render;
+    wlc.update     = update;
+    wlc.destroy    = destroy;
 
     wlc.display = wl_display_connect(NULL);
     if (wlc.display)

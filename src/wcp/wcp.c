@@ -15,6 +15,12 @@
 
 int inited = 0;
 
+void update(ev_t ev)
+{
+    ui_manager_event(ev);
+    wl_connector_draw();
+}
+
 void render(uint32_t time, bm_rgba_t* bm)
 {
     if (inited < 1) inited += 1;
@@ -24,9 +30,11 @@ void render(uint32_t time, bm_rgba_t* bm)
 	inited += 1;
     }
 
-    zc_time(NULL);
     ui_manager_render(0, bm);
-    zc_time("ui render");
+}
+
+void destroy()
+{
 }
 
 int main(int argc, char* argv[])
@@ -146,7 +154,7 @@ int main(int argc, char* argv[])
 
     /* ui_manager_event(ev); */
 
-    wl_connector_init(300, 225, render);
+    wl_connector_init(300, 225, update, render, destroy);
 
     /* show in wayland buffer */
 

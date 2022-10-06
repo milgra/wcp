@@ -23,20 +23,25 @@ enum evtype
 typedef struct _ev_t
 {
     enum evtype type;
-    int         x;
-    int         y;
-    float       dx;
-    float       dy;
-    int         w;
-    int         h;
-    char        text[32];
-    int         drag;
-    uint32_t    time;
-    uint32_t    dtime;
-    int         button;
-    int         dclick;
-    int         ctrl_down;
-    int         shift_down;
+
+    int x;
+    int y;
+    int w;
+    int h;
+
+    float dx;
+    float dy;
+
+    uint32_t time;
+    uint32_t dtime;
+
+    char text[32];
+    int  drag;
+
+    int button;
+    int dclick;
+    int ctrl_down;
+    int shift_down;
 } ev_t;
 
 #endif

@@ -44,6 +44,8 @@ void ui_screenshot(uint32_t time);
 #include "zc_path.c"
 #include "zc_text.c"
 #include "zc_time.c"
+#include <pthread.h>
+#include <unistd.h>
 
 struct _ui_t
 {
@@ -53,9 +55,13 @@ struct _ui_t
 
     view_t* seekknob;
     view_t* volknob;
+
+    char*     command;
+    pthread_t thread;
+
 } ui;
 
-int execute_command(char* command, char** result)
+int ui_execute_command(char* command, char** result)
 {
     char buff[100];
 
@@ -64,6 +70,25 @@ int execute_command(char* command, char** result)
     pclose(pipe); // CLOSE 0
 
     return 0;
+}
+
+void* ui_command_thread(void* data)
+{
+    while (1)
+    {
+	if (ui.command)
+	{
+	    char* result = cstr_new_cstring("");
+	    ui_execute_command(ui.command, &result);
+
+	    REL(ui.command);
+	    REL(result);
+	    ui.command = NULL;
+	}
+	else usleep(100);
+    }
+
+    return NULL;
 }
 
 void ui_on_key_down(void* userdata, void* data)
@@ -78,18 +103,24 @@ void ui_on_event(void* userdata, void* data)
     {
 	int ratio = (int) (vh_slider_get_ratio(view) * 100.0);
 
-	char* script  = path_new_append(config_get("res_path"), "script/");
-	char* command = cstr_new_format(200, "bash %s%s %i", script, view->script, ratio);
-	char* result  = cstr_new_cstring("");
-	execute_command(command, &result);
+	if (!ui.command)
+	{
+	    char* script  = path_new_append(config_get("res_path"), "script/");
+	    char* command = cstr_new_format(200, "bash %s%s %i", script, view->script, ratio);
+	    ui.command    = command;
+	    REL(script);
+	}
     }
 
     if (view->type && strcmp(view->type, "button") == 0)
     {
-	char* script  = path_new_append(config_get("res_path"), "script/");
-	char* command = cstr_new_format(200, "bash %s%s 1", script, view->script);
-	char* result  = cstr_new_cstring("");
-	execute_command(command, &result);
+	if (!ui.command)
+	{
+	    char* script  = path_new_append(config_get("res_path"), "script/");
+	    char* command = cstr_new_format(200, "bash %s%s 1", script, view->script);
+	    ui.command    = command;
+	    REL(script);
+	}
     }
 }
 
@@ -141,6 +172,8 @@ void ui_init(float width, float height)
     text_init();                    // DESTROY 0
     ui_manager_init(width, height); // DESTROY 1
 
+    pthread_create(&ui.thread, NULL, &ui_command_thread, NULL);
+
     /* generate views from descriptors */
 
     cb_t* btn_cb = cb_new(ui_on_event, NULL);
@@ -183,7 +216,7 @@ void ui_post_render_init()
 	    char* script  = path_new_append(config_get("res_path"), "script/");
 	    char* command = cstr_new_format(200, "bash %s%s", script, view->script);
 	    char* result  = cstr_new_cstring("");
-	    execute_command(command, &result);
+	    ui_execute_command(command, &result);
 
 	    printf("result for %s : %s\n", command, result);
 
