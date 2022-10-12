@@ -96,7 +96,7 @@ void ui_on_event(void* userdata, void* data)
 	if (!ui.command)
 	{
 	    char* script  = path_new_append(config_get("res_path"), "script/");
-	    char* command = cstr_new_format(200, "bash %s%s %i", script, view->script, ratio);
+	    char* command = cstr_new_format(200, "sh %s%s %i", script, view->script, ratio);
 	    ui.command    = command;
 	    REL(script);
 	}
@@ -107,7 +107,7 @@ void ui_on_event(void* userdata, void* data)
 	if (!ui.command)
 	{
 	    char* script  = path_new_append(config_get("res_path"), "script/");
-	    char* command = cstr_new_format(200, "bash %s%s 1", script, view->script);
+	    char* command = cstr_new_format(200, "sh %s%s 1", script, view->script);
 	    ui.command    = command;
 	    REL(script);
 	}
@@ -123,7 +123,7 @@ void ui_load_values()
 	if (view->script)
 	{
 	    char* script  = path_new_append(config_get("res_path"), "script/");
-	    char* command = cstr_new_format(200, "bash %s%s", script, view->script);
+	    char* command = cstr_new_format(200, "sh %s%s", script, view->script);
 	    char* result  = cstr_new_cstring("");
 	    ui_execute_command(command, &result);
 
@@ -137,7 +137,9 @@ void ui_load_values()
 		float ratio = (float) atoi(result) / 100.0;
 		vh_slider_set(view, ratio);
 	    }
+	    REL(script);
 	    REL(result);
+	    REL(command);
 	}
     }
 }

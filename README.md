@@ -8,8 +8,9 @@ Wayland Control Panel was made for SwayOS (https://swayos.github.io)
 
 ## Features ##
 
-- content and style fully configurable via html, css and shell scripts
-- super lightweight ( no gtk&qt )
+- content and style fully configurable via html and css
+- functionality fully controllable via shell scripts
+- super lightweight ( no gtk & qt )
 
 ## Installation
 
@@ -64,14 +65,16 @@ bindsym $mod+p exec "echo 2 > /tmp/wcp"
 
 ## Configuration
 
-Copy the html, img and script folders from /usr/local/share/wcp under ~/.config/wcp/
-Edit ~/.config/wcp/html/main.html to add or remove new items from the control panel, edit ~/.config/wcp/html/main.css to modify, add and remove styles.
-Add new images needed by new styles under ~/.config/wcp/img/
-Add new script under ~/.config/wcp/script
+Copy the html, img and script folders from /usr/local/share/wcp under ~/.config/wcp/  
+Edit ~/.config/wcp/html/main.html to add or remove new items from the control panel, edit ~/.config/wcp/html/main.css to modify, add and remove styles.  
+Add new images needed by new styles under ~/.config/wcp/img/  
+Add new script under ~/.config/wcp/script  
 
 ### Creating new scripts
 
-The idea is the following : if a script doesn't receive any arguments then it should return a string value ( integers between 0 and 100 in case of sliders, strings in case of labels ), if it receives and arguments ( integers between 0 and 100 in acse of sliders, 1 in case of button ) then the script should do something.
+The idea is the following :  
+if a script doesn't receive any arguments then it should return a string value ( integers between 0 and 100 in case of sliders, strings in case of labels ),
+if it receives and arguments ( integers between 0 and 100 in acse of sliders, 1 in case of button ) then the script should do something.
 
 ### Contribution/Development ##
 

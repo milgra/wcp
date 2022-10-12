@@ -73,6 +73,7 @@ struct wlc_t
     struct wl_buffer*  buffer;   // buffer for surface
     struct wl_shm*     shm;      // active shared memory buffer
     void*              shm_data; // active bufferdata
+    int                shm_size;
 
     struct zxdg_output_manager_v1* xdg_output_manager; // active xdg output manager
     struct zwlr_layer_shell_v1*    layer_shell;        // active layer shell
@@ -85,6 +86,8 @@ struct wlc_t
     struct monitor_info* monitor;
 
     // window state
+
+    bm_rgba_t* bitmap;
 
     int  win_width;
     int  win_height;
@@ -473,7 +476,7 @@ static void wl_connector_buffer_release(void* data, struct wl_buffer* wl_buffer)
 static const struct wl_buffer_listener buffer_listener = {
     .release = wl_connector_buffer_release};
 
-struct wl_buffer* wl_connector_create_buffer()
+void wl_connector_create_buffer()
 {
     zc_log_debug("create buffer");
 
@@ -493,11 +496,13 @@ struct wl_buffer* wl_connector_create_buffer()
     wlc.win_height     = height;
     wlc.monitor->ratio = ratio;
 
+    wlc.bitmap = bm_rgba_new(width, height);
+
     int fd = wl_connector_shm_create();
     if (fd < 0)
     {
 	zc_log_error("creating a buffer file for %d B failed: %m", size);
-	return NULL;
+	return;
     }
     zc_log_debug("shm file created");
 
@@ -507,7 +512,7 @@ struct wl_buffer* wl_connector_create_buffer()
     {
 	zc_log_error("mmap failed: %m");
 	close(fd);
-	return NULL;
+	return;
     }
 
     zc_log_debug("shm data created");
@@ -517,38 +522,30 @@ struct wl_buffer* wl_connector_create_buffer()
 
     wl_shm_pool_destroy(pool);
 
+    wlc.buffer   = buffer;
+    wlc.shm_size = size;
+
     wl_buffer_add_listener(buffer, &buffer_listener, NULL);
     zc_log_debug("buffer listener added");
 
     // init
     (*wlc.init)(width, height, ratio);
-
-    return buffer;
 }
 
 void wl_connector_draw()
 {
-    /* double factor = wlc.monitor->scale / ((double) wlc.monitor->physical_width / wlc.monitor->logical_width); */
-
-    /* int32_t width  = round_to_int(wlc.monitor->physical_width * factor); */
-    /* int32_t height = wlc.win_height * wlc.monitor->scale; */
-
-    int32_t width  = wlc.win_width;
-    int32_t height = wlc.win_height;
-
-    uint8_t*   argb   = wlc.shm_data;
-    bm_rgba_t* bitmap = bm_rgba_new(width, height);
+    uint8_t* argb = wlc.shm_data;
 
     /* gfx_rect(bitmap, 0, 0, width, height, 0x000000FF, 0); */
 
-    (*wlc.render)(0, 0, bitmap);
+    (*wlc.render)(0, 0, wlc.bitmap);
 
-    for (int i = 0; i < bitmap->size; i += 4)
+    for (int i = 0; i < wlc.bitmap->size; i += 4)
     {
-	argb[i]     = bitmap->data[i + 2];
-	argb[i + 1] = bitmap->data[i + 1];
-	argb[i + 2] = bitmap->data[i];
-	argb[i + 3] = bitmap->data[i + 3];
+	argb[i]     = wlc.bitmap->data[i + 2];
+	argb[i + 1] = wlc.bitmap->data[i + 1];
+	argb[i + 2] = wlc.bitmap->data[i];
+	argb[i + 3] = wlc.bitmap->data[i + 3];
     }
 
     wl_surface_attach(wlc.surface, wlc.buffer, 0, 0);
@@ -699,7 +696,7 @@ void wl_connector_init(
 
 	    zc_log_debug("monitor selected");
 
-	    wlc.buffer = wl_connector_create_buffer();
+	    wl_connector_create_buffer();
 
 	    zc_log_debug("buffer created and drawn");
 
@@ -807,7 +804,12 @@ void wl_connector_init(
 		}
 	    }
 
-	    /* dmenu_close called */
+	    /* destroy buffer */
+
+	    wl_buffer_destroy(wlc.buffer);
+	    munmap(wlc.shm_data, wlc.shm_size);
+	    REL(wlc.bitmap);
+
 	    wl_display_disconnect(wlc.display);
 	}
 	else zc_log_debug("compositor not received");

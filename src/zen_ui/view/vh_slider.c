@@ -76,11 +76,17 @@ void vh_slider_desc(void* p, int level)
     printf("vh_slider");
 }
 
+void vh_slider_del(void* p)
+{
+    vh_slider_t* vh = p;
+    if (vh->event) REL(vh->event);
+}
+
 void vh_slider_add(view_t* view, cb_t* event)
 {
     assert(view->handler == NULL && view->handler_data == NULL);
 
-    vh_slider_t* vh = CAL(sizeof(vh_slider_t), NULL, vh_slider_desc);
+    vh_slider_t* vh = CAL(sizeof(vh_slider_t), vh_slider_del, vh_slider_desc);
 
     if (event) vh->event = RET(event);
 
