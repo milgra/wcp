@@ -41,8 +41,6 @@ bm_rgba_t* bm_rgba_new(int the_w, int the_h)
 {
     assert(the_w > 0 && the_h > 0);
 
-    printf("BM NEW %i %i\n", the_w, the_h);
-
     bm_rgba_t* bm = CAL(sizeof(bm_rgba_t), bm_rgba_del, bm_rgba_describe); // REL 0
 
     bm->w = the_w;

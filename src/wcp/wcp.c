@@ -61,7 +61,8 @@ int main(int argc, char* argv[])
 	"  -h, --help                            Show help message and quit.\n"
 	"  -v, --verbose                         Increase verbosity of messages, defaults to errors and warnings only.\n"
 	"  -f, --frame=[width]x[height]          Initial window dimension\n"
-	"  -r, --resources= [resources folder]   Resources dir for current session\n"
+	"  -m, --margin=[size]                   Margin\n"
+	"  -r, --resources=[resources folder]    Resources dir for current session\n"
 	"\n";
 
     const struct option long_options[] =
@@ -69,22 +70,25 @@ int main(int argc, char* argv[])
 	    {"help", no_argument, NULL, 'h'},
 	    {"verbose", no_argument, NULL, 'v'},
 	    {"frame", optional_argument, NULL, 'f'},
+	    {"margin", optional_argument, NULL, 'm'},
 	    {"resources", optional_argument, 0, 'r'}};
 
     char* res_par = NULL;
     char* frm_par = NULL;
+    char* mrg_par = NULL;
 
     int verbose      = 0;
     int option       = 0;
     int option_index = 0;
 
-    while ((option = getopt_long(argc, argv, "vhr:f:", long_options, &option_index)) != -1)
+    while ((option = getopt_long(argc, argv, "vhr:f:m:", long_options, &option_index)) != -1)
     {
 	switch (option)
 	{
 	    case '?': printf("parsing option %c value: %s\n", option, optarg); break;
 	    case 'r': res_par = cstr_new_cstring(optarg); break; // REL 0
 	    case 'f': frm_par = cstr_new_cstring(optarg); break; // REL 1
+	    case 'm': mrg_par = cstr_new_cstring(optarg); break; // REL 2
 	    case 'v': verbose = 1; break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
@@ -95,11 +99,11 @@ int main(int argc, char* argv[])
     char cwd[PATH_MAX] = {"~"};
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* wrk_path = path_new_normalize(cwd, NULL); // REL 2
+    char* wrk_path = path_new_normalize(cwd, NULL); // REL 3
 
     char* res_path     = NULL;
-    char* res_path_loc = res_par ? path_new_normalize(res_par, wrk_path) : path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 3
-    char* res_path_glo = cstr_new_cstring(PKG_DATADIR);                                                                         // REL 4
+    char* res_path_loc = res_par ? path_new_normalize(res_par, wrk_path) : path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 4
+    char* res_path_glo = cstr_new_cstring(PKG_DATADIR);                                                                         // REL 5
 
     DIR* dir = opendir(res_path_loc);
     if (dir)
@@ -109,9 +113,9 @@ int main(int argc, char* argv[])
     }
     else res_path = res_path_glo;
 
-    char* css_path  = path_new_append(res_path, "html/main.css");  // REL 5
-    char* html_path = path_new_append(res_path, "html/main.html"); // REL 6
-    char* scr_path  = path_new_append(res_path, "script");         // REL 7
+    char* css_path  = path_new_append(res_path, "html/main.css");  // REL 6
+    char* html_path = path_new_append(res_path, "html/main.html"); // REL 7
+    char* scr_path  = path_new_append(res_path, "script");         // REL 8
 
     // print path info to console
 
@@ -138,6 +142,8 @@ int main(int argc, char* argv[])
 
     int width  = 300;
     int height = 300;
+    int margin = 0;
+
     if (frm_par != NULL)
     {
 	width      = atoi(frm_par);
@@ -145,7 +151,12 @@ int main(int argc, char* argv[])
 	height     = atoi(next + 1);
     }
 
-    wl_connector_init(width, height, init, update, render, destroy);
+    if (mrg_par != NULL)
+    {
+	margin = atoi(mrg_par);
+    }
+
+    wl_connector_init(width, height, margin, init, update, render, destroy);
 
     /* show in wayland buffer */
 
@@ -155,13 +166,14 @@ int main(int argc, char* argv[])
 
     if (res_par) REL(res_par); // REL 0
     if (frm_par) REL(frm_par); // REL 1
+    if (mrg_par) REL(mrg_par); // REL 1
 
-    REL(wrk_path);     // REL 2
-    REL(res_path_loc); // REL 3
-    REL(res_path_glo); // REL 4
-    REL(css_path);     // REL 5
-    REL(html_path);    // REL 6
-    REL(scr_path);     // REL 7
+    REL(wrk_path);     // REL 3
+    REL(res_path_loc); // REL 4
+    REL(res_path_glo); // REL 5
+    REL(css_path);     // REL 6
+    REL(html_path);    // REL 7
+    REL(scr_path);     // REL 8
 
 #ifdef DEBUG
     mem_stats();

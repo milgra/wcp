@@ -8,6 +8,7 @@
 void wl_connector_init(
     int w,
     int h,
+    int m,
     void (*init)(int w, int h, float scale),
     void (*update)(ev_t),
     void (*render)(uint32_t time, uint32_t index, bm_rgba_t* bm),
@@ -91,6 +92,7 @@ struct wlc_t
 
     int  win_width;
     int  win_height;
+    int  win_margin;
     bool running;
     int  visible;
 
@@ -614,10 +616,10 @@ void wl_show()
 
 	zwlr_layer_surface_v1_set_margin(
 	    wlc.layer_surface,
-	    20,
-	    20,
-	    20,
-	    20);
+	    wlc.win_margin,
+	    wlc.win_margin,
+	    wlc.win_margin,
+	    wlc.win_margin);
 
 	zwlr_layer_surface_v1_add_listener(wlc.layer_surface, &layer_surface_listener, NULL);
 	zc_log_debug("layer surface listener added");
@@ -660,6 +662,7 @@ void wl_hide()
 void wl_connector_init(
     int w,
     int h,
+    int margin,
     void (*init)(int w, int h, float scale),
     void (*update)(ev_t),
     void (*render)(uint32_t time, uint32_t index, bm_rgba_t* bm),
@@ -669,6 +672,7 @@ void wl_connector_init(
 
     wlc.win_width  = w;
     wlc.win_height = h;
+    wlc.win_margin = margin;
     wlc.init       = init;
     wlc.render     = render;
     wlc.update     = update;
