@@ -1,7 +1,7 @@
 project(
   'wcp',
   'c',
-  version: '0.4',
+  version: '0.5',
   license: 'GPLv3',
   default_options: ['c_std=gnu99']
 )
