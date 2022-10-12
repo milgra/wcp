@@ -230,6 +230,7 @@ void view_del(void* pointer)
     if (view->texture.bitmap) REL(view->texture.bitmap); // not all views has texture
     if (view->class) REL(view->class);
     if (view->type) REL(view->type);
+    if (view->script) REL(view->script);
 
     REL(view->id);
     REL(view->views);

@@ -50,14 +50,14 @@ void tg_css_gen(view_t* view)
 	{
 	    bm_rgba_t* bm = view->texture.bitmap;
 
-	    /* if (bm == NULL || */
-	    /* 	bm->w != (int) view->frame.local.w || */
-	    /* 	bm->h != (int) view->frame.local.h) */
-	    /* { */
-	    /* 	bm = bm_rgba_new((int) view->frame.local.w, (int) view->frame.local.h); // REL 0 */
-	    /* 	view_set_texture_bmp(view, bm); */
-	    /* 	REL(bm); */
-	    /* } */
+	    if (bm == NULL ||
+		bm->w != (int) view->frame.local.w ||
+		bm->h != (int) view->frame.local.h)
+	    {
+		bm = bm_rgba_new((int) view->frame.local.w, (int) view->frame.local.h); // REL 0
+		view_set_texture_bmp(view, bm);
+		REL(bm);
+	    }
 
 	    /* coder_load_image_into(view->style.background_image, view->texture.bitmap); */
 	    view->texture.changed = 0;
@@ -116,26 +116,38 @@ void tg_css_gen(view_t* view)
 
 	    size_t rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 
-	    /* printf("width %u height %u rowbytes %zu\n", width, height, rowbytes); */
-
 	    row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * height);
 	    for (y = 0; y < height; y++)
 		row_pointers[y] = (png_byte*) malloc(rowbytes);
 
 	    png_read_image(png_ptr, row_pointers);
 
-	    bm = bm_rgba_new(width, height); // REL 0
+	    bm_rgba_t* rawbm = bm_rgba_new(width, height); // REL 0
 
 	    // copy to bmp
 	    for (y = 0; y < height; y++)
 	    {
-		memcpy((uint8_t*) bm->data + y * width * 4, row_pointers[y], rowbytes);
+		memcpy((uint8_t*) rawbm->data + y * width * 4, row_pointers[y], rowbytes);
 	    }
+
+	    for (y = 0; y < height; y++)
+		free(row_pointers[y]);
+	    free(row_pointers);
+
+	    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 
 	    fclose(fp);
 
-	    view_set_texture_bmp(view, bm);
-	    REL(bm);
+	    if (bm->w == rawbm->w && bm->h == rawbm->h)
+		gfx_insert(bm, rawbm, 0, 0);
+	    else
+		gfx_scale(rawbm, bm);
+
+	    REL(rawbm);
+
+	    /* view_set_texture_bmp(view, bm); */
+
+	    /* REL(bm); */
 	}
 	else if (view->style.background_color)
 	{

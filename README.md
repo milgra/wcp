@@ -1,6 +1,6 @@
 # wcp - Wayland Control Panel
 
-Script-driven control panel/system menu for Wayland compositors.
+Script-driven control panel/system menu for wayland based window managers.
 
 Wayland Control Panel was made for SwayOS (https://swayos.github.io)
 
@@ -62,7 +62,18 @@ For example, to toggle with META+P
 bindsym $mod+p exec "echo 2 > /tmp/wcp"
 ```
 
-## Contribution/Development ##
+## Configuration
+
+Copy the html, img and script folders from /usr/local/share/wcp under ~/.config/wcp/
+Edit ~/.config/wcp/html/main.html to add or remove new items from the control panel, edit ~/.config/wcp/html/main.css to modify, add and remove styles.
+Add new images needed by new styles under ~/.config/wcp/img/
+Add new script under ~/.config/wcp/script
+
+### Creating new scripts
+
+The idea is the following : if a script doesn't receive any arguments then it should return a string value ( integers between 0 and 100 in case of sliders, strings in case of labels ), if it receives and arguments ( integers between 0 and 100 in acse of sliders, 1 in case of button ) then the script should do something.
+
+### Contribution/Development ##
 
 Feel free to push fixes/improvements.
 

@@ -4,7 +4,7 @@
 #include "view.c"
 #include "zc_vector.c"
 
-void viewgen_css_apply(vec_t* views, char* csspath, char* respath);
+void viewgen_css_apply(vec_t* views, char* csspath, char* respath, float scale);
 
 #endif
 
@@ -14,7 +14,7 @@ void viewgen_css_apply(vec_t* views, char* csspath, char* respath);
 #include "zc_log.c"
 #include <limits.h>
 
-void viewgen_css_apply_style(view_t* view, map_t* style, char* respath)
+void viewgen_css_apply_style(view_t* view, map_t* style, char* respath, float scale)
 {
     vec_t* keys = VNEW(); // REL 0
     map_keys(style, keys);
@@ -54,12 +54,12 @@ void viewgen_css_apply_style(view_t* view, map_t* style, char* respath)
 	else if (strcmp(key, "font-size") == 0)
 	{
 	    float size            = atof(val);
-	    view->style.font_size = size;
+	    view->style.font_size = size * scale;
 	}
 	else if (strcmp(key, "line-height") == 0)
 	{
 	    float size              = atof(val);
-	    view->style.line_height = size;
+	    view->style.line_height = size * scale;
 	}
 	else if (strcmp(key, "word-wrap") == 0)
 	{
@@ -84,9 +84,10 @@ void viewgen_css_apply_style(view_t* view, map_t* style, char* respath)
 	    }
 	    else if (strstr(val, "px") != NULL)
 	    {
-		int pix             = atoi(val);
-		view->style.width   = pix;
-		view->frame.local.w = pix;
+		int   pix           = atoi(val);
+		float fpix          = (int) ((float) pix * scale);
+		view->style.width   = fpix;
+		view->frame.local.w = fpix;
 	    }
 	}
 	else if (strcmp(key, "height") == 0)
@@ -98,9 +99,10 @@ void viewgen_css_apply_style(view_t* view, map_t* style, char* respath)
 	    }
 	    else if (strstr(val, "px") != NULL)
 	    {
-		int pix             = atoi(val);
-		view->style.height  = pix;
-		view->frame.local.h = pix;
+		int   pix           = atoi(val);
+		float fpix          = (int) ((float) pix * scale);
+		view->style.height  = fpix;
+		view->frame.local.h = fpix;
 	    }
 	}
 	else if (strcmp(key, "display") == 0)
@@ -133,84 +135,94 @@ void viewgen_css_apply_style(view_t* view, map_t* style, char* respath)
 	    }
 	    else if (strstr(val, "px") != NULL)
 	    {
-		int pix                   = atoi(val);
-		view->style.margin        = pix;
-		view->style.margin_top    = pix;
-		view->style.margin_left   = pix;
-		view->style.margin_right  = pix;
-		view->style.margin_bottom = pix;
+		int   pix                 = atoi(val);
+		float fpix                = (int) ((float) pix * scale);
+		view->style.margin        = fpix;
+		view->style.margin_top    = fpix;
+		view->style.margin_left   = fpix;
+		view->style.margin_right  = fpix;
+		view->style.margin_bottom = fpix;
 	    }
 	}
 	else if (strcmp(key, "top") == 0)
 	{
 	    if (strstr(val, "px") != NULL)
 	    {
-		int pix         = atoi(val);
-		view->style.top = pix;
+		int   pix       = atoi(val);
+		float fpix      = (int) ((float) pix * scale);
+		view->style.top = fpix;
 	    }
 	}
 	else if (strcmp(key, "left") == 0)
 	{
 	    if (strstr(val, "px") != NULL)
 	    {
-		int pix          = atoi(val);
-		view->style.left = pix;
+		int   pix        = atoi(val);
+		float fpix       = (int) ((float) pix * scale);
+		view->style.left = fpix;
 	    }
 	}
 	else if (strcmp(key, "right") == 0)
 	{
 	    if (strstr(val, "px") != NULL)
 	    {
-		int pix           = atoi(val);
-		view->style.right = pix;
+		int   pix         = atoi(val);
+		float fpix        = (int) ((float) pix * scale);
+		view->style.right = fpix;
 	    }
 	}
 	else if (strcmp(key, "bottom") == 0)
 	{
 	    if (strstr(val, "px") != NULL)
 	    {
-		int pix            = atoi(val);
-		view->style.bottom = pix;
+		int   pix          = atoi(val);
+		float fpix         = (int) ((float) pix * scale);
+		view->style.bottom = fpix;
 	    }
 	}
 	else if (strcmp(key, "margin-top") == 0)
 	{
 	    if (strstr(val, "px") != NULL)
 	    {
-		int pix                = atoi(val);
-		view->style.margin_top = pix;
+		int   pix              = atoi(val);
+		float fpix             = (int) ((float) pix * scale);
+		view->style.margin_top = fpix;
 	    }
 	}
 	else if (strcmp(key, "margin-left") == 0)
 	{
 	    if (strstr(val, "px") != NULL)
 	    {
-		int pix                 = atoi(val);
-		view->style.margin_left = pix;
+		int   pix               = atoi(val);
+		float fpix              = (int) ((float) pix * scale);
+		view->style.margin_left = fpix;
 	    }
 	}
 	else if (strcmp(key, "margin-right") == 0)
 	{
 	    if (strstr(val, "px") != NULL)
 	    {
-		int pix                  = atoi(val);
-		view->style.margin_right = pix;
+		int   pix                = atoi(val);
+		float fpix               = (int) ((float) pix * scale);
+		view->style.margin_right = fpix;
 	    }
 	}
 	else if (strcmp(key, "margin-bottom") == 0)
 	{
 	    if (strstr(val, "px") != NULL)
 	    {
-		int pix                   = atoi(val);
-		view->style.margin_bottom = pix;
+		int   pix                 = atoi(val);
+		float fpix                = (int) ((float) pix * scale);
+		view->style.margin_bottom = fpix;
 	    }
 	}
 	else if (strcmp(key, "border-radius") == 0)
 	{
 	    if (strstr(val, "px") != NULL)
 	    {
-		int pix                   = atoi(val);
-		view->style.border_radius = pix;
+		int   pix                 = atoi(val);
+		float fpix                = (int) ((float) pix * scale);
+		view->style.border_radius = fpix;
 	    }
 	}
 	else if (strcmp(key, "box-shadow") == 0)
@@ -250,7 +262,7 @@ void viewgen_css_apply_style(view_t* view, map_t* style, char* respath)
     REL(keys);
 }
 
-void viewgen_css_apply(vec_t* views, char* csspath, char* respath)
+void viewgen_css_apply(vec_t* views, char* csspath, char* respath, float scale)
 {
     map_t* styles = css_new(csspath);
     map_t* style;
@@ -266,7 +278,7 @@ void viewgen_css_apply(vec_t* views, char* csspath, char* respath)
 	style = MGET(styles, cssid);
 	if (style)
 	{
-	    viewgen_css_apply_style(view, style, respath);
+	    viewgen_css_apply_style(view, style, respath, scale);
 	}
 
 	if (view->class)
@@ -286,7 +298,7 @@ void viewgen_css_apply(vec_t* views, char* csspath, char* respath)
 		// zc_log_debug("applying class %s to %s", cls, view->id);
 		if (style)
 		{
-		    viewgen_css_apply_style(view, style, respath);
+		    viewgen_css_apply_style(view, style, respath, scale);
 		}
 	    } while ((token = strtok(NULL, " ")));
 	}

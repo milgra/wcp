@@ -13,6 +13,11 @@
 #include <time.h>
 #include <unistd.h>
 
+void init(int width, int height, float scale)
+{
+    ui_init(width, height, scale); // DESTROY 3
+}
+
 void update(ev_t ev)
 {
     if (ev.type == EV_WINDOW_SHOW) ui_load_values();
@@ -21,13 +26,14 @@ void update(ev_t ev)
     wl_connector_draw();
 }
 
-void render(uint32_t time, bm_rgba_t* bm)
+void render(uint32_t time, uint32_t index, bm_rgba_t* bm)
 {
     ui_manager_render(0, bm);
 }
 
 void destroy()
 {
+    ui_destroy();
 }
 
 int main(int argc, char* argv[])
@@ -90,10 +96,9 @@ int main(int argc, char* argv[])
     char cwd[PATH_MAX] = {"~"};
     getcwd(cwd, sizeof(cwd));
 
-    char* top_path    = path_new_normalize(cwd, NULL); // REL 5
-    char* wrk_path    = top_path;
-    char* res_path    = res_par ? path_new_normalize(res_par, wrk_path) : cstr_new_cstring(PKG_DATADIR);                       // REL 7
-    char* cfgdir_path = cfg_par ? path_new_normalize(cfg_par, wrk_path) : path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 8
+    char* top_path    = path_new_normalize(cwd, NULL);                                                                         // REL 5
+    char* res_path    = res_par ? path_new_normalize(res_par, top_path) : cstr_new_cstring(PKG_DATADIR);                       // REL 7
+    char* cfgdir_path = cfg_par ? path_new_normalize(cfg_par, top_path) : path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 8
     char* css_path    = path_new_append(res_path, "html/main.css");                                                            // REL 9
     char* html_path   = path_new_append(res_path, "html/main.html");                                                           // REL 10
     char* scr_path    = path_new_append(res_path, "script");                                                                   // REL 10
@@ -103,7 +108,6 @@ int main(int argc, char* argv[])
     // print path info to console
 
     printf("top path      : %s\n", top_path);
-    printf("working path  : %s\n", wrk_path);
     printf("resource path : %s\n", res_path);
     printf("config path   : %s\n", cfg_path);
     printf("state path    : %s\n", per_path);
@@ -122,7 +126,6 @@ int main(int argc, char* argv[])
     // init non-configurable defaults
 
     config_set("top_path", top_path);
-    config_set("wrk_path", wrk_path);
     config_set("cfg_path", cfg_path);
     config_set("per_path", per_path);
     config_set("css_path", css_path);
@@ -138,9 +141,7 @@ int main(int argc, char* argv[])
 	height     = atoi(next + 1);
     }
 
-    ui_init(width, height); // DESTROY 3
-
-    wl_connector_init(width, height, update, render, destroy);
+    wl_connector_init(width, height, init, update, render, destroy);
 
     /* show in wayland buffer */
 
@@ -153,7 +154,6 @@ int main(int argc, char* argv[])
     if (frm_par) REL(frm_par); // REL 4
 
     REL(top_path);    // REL 5
-    REL(wrk_path);    // REL 6
     REL(res_path);    // REL 7
     REL(cfgdir_path); // REL 8
     REL(css_path);    // REL 9

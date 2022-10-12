@@ -102,10 +102,10 @@
     blocks: no;
 }
 
-#backlighticon {
+#displayicon {
     width: 30px;
     height: 30px;
-    background-image: url("brightness.png");
+    background-image: url("display.png");
     blocks: no;
 }
 
@@ -120,27 +120,6 @@
     width: 30px;
     height: 30px;
     background-image: url("bluetooth.png");
-    blocks: no;
-}
-
-#playicon {
-    width: 30px;
-    height: 30px;
-    background-image: url("pause.png");
-    blocks: no;
-}
-
-#previcon {
-    width: 30px;
-    height: 30px;
-    background-image: url("prev.png");
-    blocks: no;
-}
-
-#nexticon {
-    width: 30px;
-    height: 30px;
-    background-image: url("next.png");
     blocks: no;
 }
 
@@ -164,7 +143,7 @@
     margin: auto;
     width: 30px;
     height: 30px;
-    background-image: url("pause.png");
+    background-image: url("suspend.png");
     blocks: no;
 }
 

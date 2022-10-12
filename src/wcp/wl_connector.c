@@ -8,8 +8,9 @@
 void wl_connector_init(
     int w,
     int h,
+    void (*init)(int w, int h, float scale),
     void (*update)(ev_t),
-    void (*render)(uint32_t, bm_rgba_t*),
+    void (*render)(uint32_t time, uint32_t index, bm_rgba_t* bm),
     void (*destroy)());
 
 void wl_connector_draw();
@@ -50,6 +51,7 @@ struct monitor_info
     int32_t logical_width;
     int32_t logical_height;
     double  scale;
+    double  ratio;
     int     index;
     char    name[MAX_MONITOR_NAME_LEN + 1];
 
@@ -89,8 +91,9 @@ struct wlc_t
     bool running;
     int  visible;
 
+    void (*init)(int w, int h, float scale);
     void (*update)(ev_t);
-    void (*render)(uint32_t, bm_rgba_t*);
+    void (*render)(uint32_t time, uint32_t index, bm_rgba_t* bm);
     void (*destroy)();
 
 } wlc = {0};
@@ -237,13 +240,13 @@ void wl_connector_pointer_handle_motion(void* data, struct wl_pointer* wl_pointe
     ev_t event = {
 	.type = EV_MMOVE,
 	.drag = drag,
-	.x    = (int) wl_fixed_to_double(surface_x),
-	.y    = (int) wl_fixed_to_double(surface_y)};
+	.x    = (int) wl_fixed_to_double(surface_x) * wlc.monitor->scale,
+	.y    = (int) wl_fixed_to_double(surface_y) * wlc.monitor->scale};
 
     px = event.x;
     py = event.y;
 
-    (*wlc.update)(event);
+    if (drag) (*wlc.update)(event);
 }
 void wl_connector_pointer_handle_button(void* data, struct wl_pointer* wl_pointer, uint serial, uint time, uint button, uint state)
 {
@@ -475,14 +478,20 @@ struct wl_buffer* wl_connector_create_buffer()
     zc_log_debug("create buffer");
 
     double factor = wlc.monitor->scale / ((double) wlc.monitor->physical_width / wlc.monitor->logical_width);
+    double ratio  = (double) wlc.monitor->physical_width / wlc.monitor->logical_width;
+    ratio         = wlc.monitor->scale;
 
-    int32_t width  = round_to_int(wlc.monitor->physical_width * factor);
-    int32_t height = round_to_int(wlc.win_height * wlc.monitor->scale);
+    int32_t width  = round_to_int(wlc.win_width * ratio);
+    int32_t height = round_to_int(wlc.win_height * ratio);
 
     int stride = width * 4;
     int size   = stride * height;
 
-    zc_log_debug("factor : %f, buffer width %i height %i size %i", factor, width, height, size);
+    zc_log_debug("factor : %f ratio %f width %i height %i", factor, ratio, width, height);
+
+    wlc.win_width      = width;
+    wlc.win_height     = height;
+    wlc.monitor->ratio = ratio;
 
     int fd = wl_connector_shm_create();
     if (fd < 0)
@@ -511,22 +520,28 @@ struct wl_buffer* wl_connector_create_buffer()
     wl_buffer_add_listener(buffer, &buffer_listener, NULL);
     zc_log_debug("buffer listener added");
 
+    // init
+    (*wlc.init)(width, height, ratio);
+
     return buffer;
 }
 
 void wl_connector_draw()
 {
-    double factor = wlc.monitor->scale / ((double) wlc.monitor->physical_width / wlc.monitor->logical_width);
+    /* double factor = wlc.monitor->scale / ((double) wlc.monitor->physical_width / wlc.monitor->logical_width); */
 
-    int32_t width  = round_to_int(wlc.monitor->physical_width * factor);
-    int32_t height = wlc.win_height * wlc.monitor->scale;
+    /* int32_t width  = round_to_int(wlc.monitor->physical_width * factor); */
+    /* int32_t height = wlc.win_height * wlc.monitor->scale; */
+
+    int32_t width  = wlc.win_width;
+    int32_t height = wlc.win_height;
 
     uint8_t*   argb   = wlc.shm_data;
     bm_rgba_t* bitmap = bm_rgba_new(width, height);
 
     /* gfx_rect(bitmap, 0, 0, width, height, 0x000000FF, 0); */
 
-    (*wlc.render)(0, bitmap);
+    (*wlc.render)(0, 0, bitmap);
 
     for (int i = 0; i < bitmap->size; i += 4)
     {
@@ -538,7 +553,7 @@ void wl_connector_draw()
 
     wl_surface_attach(wlc.surface, wlc.buffer, 0, 0);
     /* zwlr_layer_surface_v1_set_keyboard_interactivity(wlc.layer_surface, true); */
-    wl_surface_damage(wlc.surface, 0, 0, wlc.monitor->logical_width, wlc.win_height);
+    wl_surface_damage(wlc.surface, 0, 0, wlc.win_width, wlc.win_height);
     wl_surface_commit(wlc.surface);
 }
 
@@ -602,8 +617,8 @@ void wl_show()
 
 	zwlr_layer_surface_v1_set_margin(
 	    wlc.layer_surface,
-	    10,
-	    14,
+	    20,
+	    20,
 	    20,
 	    20);
 
@@ -648,14 +663,16 @@ void wl_hide()
 void wl_connector_init(
     int w,
     int h,
+    void (*init)(int w, int h, float scale),
     void (*update)(ev_t),
-    void (*render)(uint32_t, bm_rgba_t*),
+    void (*render)(uint32_t time, uint32_t index, bm_rgba_t* bm),
     void (*destroy)())
 {
     zc_log_debug("init %i %i", w, h);
 
     wlc.win_width  = w;
     wlc.win_height = h;
+    wlc.init       = init;
     wlc.render     = render;
     wlc.update     = update;
     wlc.destroy    = destroy;
@@ -796,6 +813,8 @@ void wl_connector_init(
 	else zc_log_debug("compositor not received");
     }
     else zc_log_debug("cannot open display");
+
+    (*wlc.destroy)();
 }
 
 #endif

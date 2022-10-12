@@ -16,6 +16,10 @@ add_project_arguments(
   language : 'c'
 )
 
+if get_option('buildtype') == 'debug'
+    add_project_arguments('-DDEBUG',language: 'c')
+endif
+
 cc = meson.get_compiler('c')
 
 math = cc.find_library('m',static:false)
@@ -143,7 +147,6 @@ wcp_src = [    'src/wcp/wcp.c',
 	       'src/zen_ui/view/view_layout.c',
 	       'src/zen_ui/view/views.c',
 	       'src/zen_ui/fontconfig.c',
-	       'src/zen_ui/ui_compositor.c',
 	       'src/zen_ui/ui_generator.c',
 	       'src/zen_ui/ui_manager.c',
 	       'src/zen_ui/ui_texmap.c',
@@ -160,11 +163,9 @@ install_data('res/html/main.html', install_dir : pkg_datadir / 'html' )
 install_data('res/html/main.css', install_dir : pkg_datadir / 'html' )
 install_data('res/img/bluetooth.png', install_dir : pkg_datadir / 'img' )
 install_data('res/img/brightness.png', install_dir : pkg_datadir / 'img' )
+install_data('res/img/display.png', install_dir : pkg_datadir / 'img' )
 install_data('res/img/exit.png', install_dir : pkg_datadir / 'img' )
 install_data('res/img/lock.png', install_dir : pkg_datadir / 'img' )
-install_data('res/img/next.png', install_dir : pkg_datadir / 'img' )
-install_data('res/img/pause.png', install_dir : pkg_datadir / 'img' )
-install_data('res/img/prev.png', install_dir : pkg_datadir / 'img' )
 install_data('res/img/reboot.png', install_dir : pkg_datadir / 'img' )
 install_data('res/img/shutdown.png', install_dir : pkg_datadir / 'img' )
 install_data('res/img/speaker.png', install_dir : pkg_datadir / 'img' )

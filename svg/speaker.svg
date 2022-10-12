@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
    version="1.0"
-   width="30"
-   height="30"
-   viewBox="0 0 4.5 4.5"
+   width="60"
+   height="60"
+   viewBox="0 0 9 9"
    id="svg236"
    sodipodi:docname="speaker.svg"
    inkscape:version="1.2.1 (9c6d41e410, 2022-07-14, custom)"
@@ -26,9 +26,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#505050"
      showgrid="false"
-     inkscape:zoom="13.392"
-     inkscape:cx="-2.1281362"
-     inkscape:cy="18.85454"
+     inkscape:zoom="9.469574"
+     inkscape:cx="38.174896"
+     inkscape:cy="22.017886"
      inkscape:window-width="1910"
      inkscape:window-height="1046"
      inkscape:window-x="0"
@@ -36,7 +36,7 @@
      inkscape:window-maximized="1"
      inkscape:current-layer="svg236" />
   <path
-     d="M 2.9727773,1.0984366 2.1384254,1.820092 H 1.3487726 v 0.9286628 h 0.7776875 l 0.8463172,0.7320643 z"
-     style="fill:none;stroke:#ffffff;stroke-width:0.243194;stroke-linejoin:round;stroke-opacity:1"
+     d="M 6.0435453,2.2356499 4.4575155,3.6074536 H 2.9564547 v 1.7653065 h 1.4783158 l 1.6087748,1.3915901 z"
+     style="fill:none;stroke:#ffffff;stroke-width:0.46229;stroke-linejoin:round;stroke-opacity:1"
      id="path232" />
 </svg>
