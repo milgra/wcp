@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
     zc_time(NULL);
 
     printf("Wayland Control Panel v" WCP_VERSION
-	   "by Milan Toth ( www.milgra.com )\n"
+	   " by Milan Toth ( www.milgra.com )\n"
 	   "If you like this app try :\n"
 	   "- Sway Oveview ( github.com/milgra/sov )\n"
 	   "- Visual Music Player (github.com/milgra/vmp)\n"

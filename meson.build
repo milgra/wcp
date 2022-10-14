@@ -31,7 +31,6 @@ wayland_scanner_dep = dependency('wayland-scanner')
 wayland_scanner     = find_program(
   wayland_scanner_dep.get_pkgconfig_variable('wayland_scanner')
 )
-xkbcommon = dependency('xkbcommon')
 
 wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
 
@@ -62,7 +61,6 @@ endforeach
 
 wcp_deps = [
   wayland_client,
-  xkbcommon,
   freetype,
   png,
   math
