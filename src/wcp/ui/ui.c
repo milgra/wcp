@@ -30,6 +30,7 @@ void ui_load_values();
 #include "viewgen_css.c"
 #include "viewgen_html.c"
 #include "viewgen_type.c"
+#include "wl_connector.c"
 #include "zc_bm_rgba.c"
 #include "zc_callback.c"
 #include "zc_cstring.c"
@@ -111,6 +112,7 @@ void ui_on_event(void* userdata, void* data)
 	    ui.command    = command;
 	    REL(script);
 	}
+	wl_hide();
     }
 }
 

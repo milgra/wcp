@@ -15,6 +15,7 @@ void wl_connector_init(
     void (*destroy)());
 
 void wl_connector_draw();
+void wl_hide();
 
 #endif
 
@@ -536,24 +537,27 @@ void wl_connector_create_buffer()
 
 void wl_connector_draw()
 {
-    uint8_t* argb = wlc.shm_data;
-
-    gfx_rect(wlc.bitmap, 0, 0, wlc.win_width, wlc.win_height, 0x00000000, 0);
-
-    (*wlc.render)(0, 0, wlc.bitmap);
-
-    for (int i = 0; i < wlc.bitmap->size; i += 4)
+    if (wlc.visible)
     {
-	argb[i]     = wlc.bitmap->data[i + 2];
-	argb[i + 1] = wlc.bitmap->data[i + 1];
-	argb[i + 2] = wlc.bitmap->data[i];
-	argb[i + 3] = wlc.bitmap->data[i + 3];
-    }
+	uint8_t* argb = wlc.shm_data;
 
-    wl_surface_attach(wlc.surface, wlc.buffer, 0, 0);
-    /* zwlr_layer_surface_v1_set_keyboard_interactivity(wlc.layer_surface, true); */
-    wl_surface_damage(wlc.surface, 0, 0, wlc.win_width, wlc.win_height);
-    wl_surface_commit(wlc.surface);
+	gfx_rect(wlc.bitmap, 0, 0, wlc.win_width, wlc.win_height, 0x00000000, 0);
+
+	(*wlc.render)(0, 0, wlc.bitmap);
+
+	for (int i = 0; i < wlc.bitmap->size; i += 4)
+	{
+	    argb[i]     = wlc.bitmap->data[i + 2];
+	    argb[i + 1] = wlc.bitmap->data[i + 1];
+	    argb[i + 2] = wlc.bitmap->data[i];
+	    argb[i + 3] = wlc.bitmap->data[i + 3];
+	}
+
+	wl_surface_attach(wlc.surface, wlc.buffer, 0, 0);
+	/* zwlr_layer_surface_v1_set_keyboard_interactivity(wlc.layer_surface, true); */
+	wl_surface_damage(wlc.surface, 0, 0, wlc.win_width, wlc.win_height);
+	wl_surface_commit(wlc.surface);
+    }
 }
 
 /* Layer surface listener */
