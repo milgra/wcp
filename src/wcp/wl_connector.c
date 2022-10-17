@@ -538,7 +538,7 @@ void wl_connector_draw()
 {
     uint8_t* argb = wlc.shm_data;
 
-    /* gfx_rect(bitmap, 0, 0, width, height, 0x000000FF, 0); */
+    gfx_rect(wlc.bitmap, 0, 0, wlc.win_width, wlc.win_height, 0x00000000, 0);
 
     (*wlc.render)(0, 0, wlc.bitmap);
 
