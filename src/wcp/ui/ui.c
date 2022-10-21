@@ -32,7 +32,6 @@ void ui_load_values();
 #include "viewgen_type.c"
 #include "wl_connector.c"
 #include "zc_bm_rgba.c"
-#include "zc_callback.c"
 #include "zc_cstring.c"
 #include "zc_draw.c"
 #include "zc_log.c"
@@ -86,33 +85,28 @@ void ui_on_key_down(void* userdata, void* data)
 {
 }
 
-void ui_on_event(void* userdata, void* data)
+void ui_on_button_event(vh_button_event_t event)
 {
-    view_t* view = data;
-
-    if (view->type && strcmp(view->type, "slider") == 0)
+    if (!ui.command)
     {
-	int ratio = (int) (vh_slider_get_ratio(view) * 100.0);
-
-	if (!ui.command)
-	{
-	    char* script  = path_new_append(config_get("res_path"), "script/");
-	    char* command = cstr_new_format(200, "sh %s%s %i", script, view->script, ratio);
-	    ui.command    = command;
-	    REL(script);
-	}
+	char* script  = path_new_append(config_get("res_path"), "script/");
+	char* command = cstr_new_format(200, "sh %s%s 1", script, event.view->script);
+	ui.command    = command;
+	REL(script);
     }
+    wl_hide();
+}
 
-    if (view->type && strcmp(view->type, "button") == 0)
+void ui_on_slider_event(vh_slider_event_t event)
+{
+    int ratio = (int) (event.ratio * 100.0);
+
+    if (!ui.command)
     {
-	if (!ui.command)
-	{
-	    char* script  = path_new_append(config_get("res_path"), "script/");
-	    char* command = cstr_new_format(200, "sh %s%s 1", script, view->script);
-	    ui.command    = command;
-	    REL(script);
-	}
-	wl_hide();
+	char* script  = path_new_append(config_get("res_path"), "script/");
+	char* command = cstr_new_format(200, "sh %s%s %i", script, event.view->script, ratio);
+	ui.command    = command;
+	REL(script);
     }
 }
 
@@ -157,13 +151,11 @@ void ui_init(float width, float height, float scale)
 
     /* generate views from descriptors */
 
-    cb_t* btn_cb = cb_new(ui_on_event, NULL);
-
     ui.view_list = VNEW();
 
     viewgen_html_parse(config_get("html_path"), ui.view_list);
     viewgen_css_apply(ui.view_list, config_get("css_path"), config_get("res_path"), scale);
-    viewgen_type_apply(ui.view_list, btn_cb);
+    viewgen_type_apply(ui.view_list, ui_on_button_event, ui_on_slider_event);
 
     ui.view_base = vec_head(ui.view_list);
 
@@ -175,10 +167,6 @@ void ui_init(float width, float height, float scale)
     /* load values from scripts */
 
     ui_load_values();
-
-    /* cleanup  */
-
-    REL(btn_cb);
 
     // show texture map for debug
 

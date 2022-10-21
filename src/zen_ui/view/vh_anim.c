@@ -13,6 +13,18 @@ typedef enum _animtype_t
     AT_EASE_OUT
 } animtype_t;
 
+enum vh_anim_event_id
+{
+    VH_ANIM_END
+};
+
+typedef struct _vh_anim_event_t
+{
+    enum vh_anim_event_id id;
+    view_t*               view;
+    void*                 userdata;
+} vh_anim_event_t;
+
 typedef struct _vh_anim_t
 {
     animtype_t type;
@@ -38,7 +50,7 @@ typedef struct _vh_anim_t
     int fsteps;
 
     void* userdata;
-    void (*on_finish)(view_t*, void*);
+    void (*on_event)(vh_anim_event_t event);
 } vh_anim_t;
 
 void vh_anim_frame(view_t* view, r2_t sf, r2_t ef, int steps, animtype_t type);
@@ -49,9 +61,7 @@ void vh_anim_region(view_t* view, r2_t sr, r2_t er, int steps, animtype_t type);
 
 void vh_anim_finish(view_t* view);
 
-void vh_anim_add(view_t* view);
-
-void vh_anim_set_event(view_t* view, void* userdata, void (*on_finish)(view_t*, void*));
+void vh_anim_add(view_t* view, void (*on_event)(vh_anim_event_t), void* userdata);
 
 #endif
 
@@ -101,8 +111,9 @@ void vh_anim_evt(view_t* view, ev_t ev)
 
 		if (vh->fstep == vh->fsteps)
 		{
-		    vh->anim_frame = 0;
-		    if (vh->on_finish) (*vh->on_finish)(view, vh->userdata);
+		    vh->anim_frame        = 0;
+		    vh_anim_event_t event = {.id = VH_ANIM_END, .view = view, .userdata = vh->userdata};
+		    if (vh->on_event) (*vh->on_event)(event);
 		}
 	    }
 	}
@@ -143,8 +154,9 @@ void vh_anim_evt(view_t* view, ev_t ev)
 
 		if (vh->rstep == vh->rsteps)
 		{
-		    vh->anim_region = 0;
-		    if (vh->on_finish) (*vh->on_finish)(view, vh->userdata);
+		    vh->anim_region       = 0;
+		    vh_anim_event_t event = {.id = VH_ANIM_END, .view = view, .userdata = vh->userdata};
+		    if (vh->on_event) (*vh->on_event)(event);
 		}
 	    }
 	}
@@ -178,8 +190,9 @@ void vh_anim_evt(view_t* view, ev_t ev)
 
 		if (vh->astep == vh->asteps)
 		{
-		    vh->anim_alpha = 0;
-		    if (vh->on_finish) (*vh->on_finish)(view, vh->userdata);
+		    vh->anim_alpha        = 0;
+		    vh_anim_event_t event = {.id = VH_ANIM_END, .view = view, .userdata = vh->userdata};
+		    if (vh->on_event) (*vh->on_event)(event);
 		}
 	    }
 	}
@@ -250,21 +263,16 @@ void vh_anim_desc(void* p, int level)
     printf("vh_anim");
 }
 
-void vh_anim_add(view_t* view)
+void vh_anim_add(view_t* view, void (*on_event)(vh_anim_event_t), void* userdata)
 {
     assert(view->handler == NULL && view->handler_data == NULL);
 
     vh_anim_t* vh = CAL(sizeof(vh_anim_t), NULL, vh_anim_desc);
+    vh->on_event  = on_event;
+    vh->userdata  = userdata;
 
     view->handler      = vh_anim_evt;
     view->handler_data = vh;
-}
-
-void vh_anim_set_event(view_t* view, void* userdata, void (*on_finish)(view_t*, void*))
-{
-    vh_anim_t* vh = view->handler_data;
-    vh->userdata  = userdata;
-    vh->on_finish = on_finish;
 }
 
 #endif

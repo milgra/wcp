@@ -44,7 +44,7 @@ void vh_tbl_head_align(view_t* view)
 	view_t* sv   = vh->head->views->data[index];
 	r2_t    svfl = sv->frame.local;
 	svfl.x       = pos;
-	pos += svfl.w + 1;
+	pos += svfl.w + 2;
 	view_set_frame(sv, svfl);
     }
 }
@@ -97,13 +97,14 @@ void vh_tbl_head_evt(view_t* view, ev_t ev)
 		    // look for
 		    for (int index = 0; index < vh->head->views->length; index++)
 		    {
-			if (index != vh->active)
+			view_t* sv  = vh->head->views->data[index];
+			r2_t    svf = sv->frame.global;
+			// inside
+			if (ev.x > svf.x && ev.x < svf.x + svf.w)
 			{
-			    view_t* sv  = vh->head->views->data[index];
-			    r2_t    svf = sv->frame.global;
-			    // inside
-			    if (ev.x > svf.x && ev.x < svf.x + svf.w)
+			    if (index != vh->active)
 			    {
+				// drop on different cell
 				view_t* cell1 = RET(vh->head->views->data[vh->active]);
 				view_t* cell2 = RET(vh->head->views->data[index]);
 
@@ -119,6 +120,11 @@ void vh_tbl_head_evt(view_t* view, ev_t ev)
 
 				if (vh->head_reorder) (*vh->head_reorder)(view, vh->active, index, vh->userdata);
 				break;
+			    }
+			    else
+			    {
+				// self click
+				if (vh->head_reorder) (*vh->head_reorder)(view, -1, index, vh->userdata);
 			    }
 			}
 		    }

@@ -39,7 +39,7 @@ void tg_scaledimg_gen(view_t* view)
     {
 	bm = bm_rgba_new(gen->w, gen->h); // REL 0
 
-	gfx_rect(bm, 0, 0, bm->w, bm->h, 0x000000FF, 0);
+	gfx_rect(bm, 0, 0, bm->w, bm->h, 0x00000000, 0);
 
 	view_set_texture_bmp(view, bm);
 	REL(bm);

@@ -6,17 +6,32 @@
 #include "zc_vector.c"
 #include <stdint.h>
 
-typedef enum _ui_table_event
+typedef struct _ui_table_t ui_table_t;
+
+enum ui_table_event_id
 {
     UI_TABLE_EVENT_SELECT,
     UI_TABLE_EVENT_OPEN,
+    UI_TABLE_EVENT_CONTEXT,
     UI_TABLE_EVENT_DRAG,
     UI_TABLE_EVENT_DROP,
     UI_TABLE_EVENT_KEY,
-    UI_TABLE_EVENT_FIELDS_UPDATE
-} ui_table_event;
+    UI_TABLE_EVENT_FIELDS_UPDATE,
+    UI_TABLE_EVENT_FIELD_SELECT
+};
 
-typedef struct _ui_table_t ui_table_t;
+typedef struct _ui_table_event_t
+{
+    enum ui_table_event_id id;
+    ui_table_t*            table;
+    char*                  field;
+    vec_t*                 fields;
+    vec_t*                 selected_items;
+    int32_t                selected_index;
+    view_t*                rowview;
+    ev_t                   ev;
+} ui_table_event_t;
+
 struct _ui_table_t
 {
     char*       id;             // unique id for item generation
@@ -24,13 +39,13 @@ struct _ui_table_t
     vec_t*      items;          // data items
     vec_t*      cache;          // item cache
     vec_t*      fields;         // field name field size interleaved vector
-    vec_t*      selected;       // selected items
+    vec_t*      selected_items; // selected items
     int32_t     selected_index; // index of last selected
     view_t*     body_v;
     view_t*     evnt_v;
     view_t*     scrl_v;
     textstyle_t textstyle;
-    void (*on_event)(ui_table_t* table, ui_table_event event, void* userdata);
+    void (*on_event)(ui_table_event_t event);
 };
 
 ui_table_t* ui_table_create(
@@ -40,7 +55,7 @@ ui_table_t* ui_table_create(
     view_t* evnt,
     view_t* head,
     vec_t*  fields,
-    void (*on_event)(ui_table_t* table, ui_table_event event, void* userdata));
+    void (*on_event)(ui_table_event_t event));
 
 void ui_table_select(
     ui_table_t* table,
@@ -49,10 +64,13 @@ void ui_table_select(
 void ui_table_set_data(
     ui_table_t* uit, vec_t* data);
 
+vec_t* ui_table_get_fields(ui_table_t* uit);
+
 #endif
 
 #if __INCLUDE_LEVEL__ == 0
 
+#include "config.c"
 #include "tg_css.c"
 #include "tg_text.c"
 #include "ui_util.c"
@@ -80,7 +98,7 @@ void ui_table_head_align(ui_table_t* uit, int fixed_index, int fixed_pos)
 	    frame.x          = ci == fixed_index ? (float) fixed_pos : wth;
 	    frame.w          = (float) sizep->intv;
 	    view_set_frame(cellview, frame);
-	    wth += frame.w;
+	    wth += frame.w + 2;
 	}
 
 	r2_t frame = rowview->frame.local;
@@ -109,7 +127,8 @@ void ui_table_head_resize(view_t* hview, int index, int size, void* userdata)
     }
     else
     {
-	(*uit->on_event)(uit, UI_TABLE_EVENT_FIELDS_UPDATE, uit->fields);
+	ui_table_event_t event = {.table = uit, .id = UI_TABLE_EVENT_FIELDS_UPDATE, .fields = uit->fields};
+	(*uit->on_event)(event);
     }
 }
 
@@ -117,36 +136,47 @@ void ui_table_head_reorder(view_t* hview, int ind1, int ind2, void* userdata)
 {
     ui_table_t* uit = (ui_table_t*) userdata;
 
-    char*  field1 = uit->fields->data[ind1 * 2];
-    num_t* size1  = uit->fields->data[ind1 * 2 + 1];
-    char*  field2 = uit->fields->data[ind2 * 2];
-    num_t* size2  = uit->fields->data[ind2 * 2 + 1];
-
-    uit->fields->data[ind1 * 2]     = field2;
-    uit->fields->data[ind1 * 2 + 1] = size2;
-
-    uit->fields->data[ind2 * 2]     = field1;
-    uit->fields->data[ind2 * 2 + 1] = size1;
-
-    for (int ri = 0; ri < uit->body_v->views->length; ri++)
+    if (ind1 == -1)
     {
-	view_t* rowview = uit->body_v->views->data[ri];
-
-	view_t* cell1 = RET(rowview->views->data[ind1]);
-	view_t* cell2 = RET(rowview->views->data[ind2]);
-
-	view_remove_subview(rowview, cell1);
-	view_insert_subview(rowview, cell1, ind2);
-	view_remove_subview(rowview, cell2);
-	view_insert_subview(rowview, cell2, ind1);
-
-	REL(cell1);
-	REL(cell2);
+	// self click, dispatch event
+	char*            field = uit->fields->data[ind2 * 2];
+	ui_table_event_t event = {.id = UI_TABLE_EVENT_FIELD_SELECT, .field = field};
+	(*uit->on_event)(event);
     }
+    else
+    {
+	char*  field1 = uit->fields->data[ind1 * 2];
+	num_t* size1  = uit->fields->data[ind1 * 2 + 1];
+	char*  field2 = uit->fields->data[ind2 * 2];
+	num_t* size2  = uit->fields->data[ind2 * 2 + 1];
 
-    ui_table_head_align(uit, -1, 0);
+	uit->fields->data[ind1 * 2]     = field2;
+	uit->fields->data[ind1 * 2 + 1] = size2;
 
-    (*uit->on_event)(uit, UI_TABLE_EVENT_FIELDS_UPDATE, uit->fields);
+	uit->fields->data[ind2 * 2]     = field1;
+	uit->fields->data[ind2 * 2 + 1] = size1;
+
+	for (int ri = 0; ri < uit->body_v->views->length; ri++)
+	{
+	    view_t* rowview = uit->body_v->views->data[ri];
+
+	    view_t* cell1 = RET(rowview->views->data[ind1]);
+	    view_t* cell2 = RET(rowview->views->data[ind2]);
+
+	    view_remove_subview(rowview, cell1);
+	    view_insert_subview(rowview, cell1, ind2);
+	    view_remove_subview(rowview, cell2);
+	    view_insert_subview(rowview, cell2, ind1);
+
+	    REL(cell1);
+	    REL(cell2);
+	}
+
+	ui_table_head_align(uit, -1, 0);
+
+	ui_table_event_t event = {.table = uit, .id = UI_TABLE_EVENT_FIELDS_UPDATE, .fields = uit->fields};
+	(*uit->on_event)(event);
+    }
 }
 
 view_t* ui_table_head_create(
@@ -166,10 +196,10 @@ view_t* ui_table_head_create(
     {
 	char*   field    = uit->fields->data[i];
 	num_t*  size     = uit->fields->data[i + 1];
-	char*   cellid   = cstr_new_format(100, "%s_cell_%s", headview->id, field);              // REL 2
-	view_t* cellview = view_new(cellid, (r2_t){wth + 1, 0, size->intv - 2, ts.line_height}); // REL 3
+	char*   cellid   = cstr_new_format(100, "%s_cell_%s", headview->id, field);      // REL 2
+	view_t* cellview = view_new(cellid, (r2_t){wth, 0, size->intv, ts.line_height}); // REL 3
 
-	wth += size->intv;
+	wth += size->intv + 2;
 
 	ts.backcolor = 0x454545FF;
 
@@ -224,10 +254,10 @@ view_t* ui_table_item_create(
 		    char*  field = uit->fields->data[i];
 		    num_t* size  = uit->fields->data[i + 1];
 		    // char*   value    = MGET(data, field);
-		    char*   cellid   = cstr_new_format(100, "%s_cell_%s", rowview->id, field);               // REL 2
-		    view_t* cellview = view_new(cellid, (r2_t){wth + 1, 0, size->intv - 2, ts.line_height}); // REL 3
+		    char*   cellid   = cstr_new_format(100, "%s_cell_%s", rowview->id, field);       // REL 2
+		    view_t* cellview = view_new(cellid, (r2_t){wth, 0, size->intv, ts.line_height}); // REL 3
 
-		    wth += size->intv;
+		    wth += size->intv + 2;
 
 		    tg_text_add(cellview);
 
@@ -238,11 +268,11 @@ view_t* ui_table_item_create(
 		}
 	    }
 
-	    rowview->style.background_color = index % 2 != 0 ? 0x35353588 : 0x45454588;
+	    rowview->style.background_color = 0x000000FF;
 
-	    if (uit->selected->length > 0)
+	    if (uit->selected_items->length > 0)
 	    {
-		uint32_t pos = vec_index_of_data(uit->selected, data);
+		uint32_t pos = vec_index_of_data(uit->selected_items, data);
 
 		if (pos < UINT32_MAX)
 		{
@@ -251,6 +281,8 @@ view_t* ui_table_item_create(
 	    }
 
 	    view_invalidate_texture(rowview);
+
+	    uint32_t color = index % 2 != 0 ? 0x35353588 : 0x45454588;
 
 	    int wth = 0;
 
@@ -266,9 +298,12 @@ view_t* ui_table_item_create(
 		frame.w = size->intv;
 		view_set_frame(cellview, frame);
 
-		wth += size->intv;
+		wth += size->intv + 2;
+
+		ts.backcolor = color;
 
 		if (value) tg_text_set(cellview, value, ts);
+		else tg_text_set(cellview, "", ts); // reset old value
 	    }
 
 	    view_set_frame(rowview, (r2_t){0, 0, wth, ts.line_height});
@@ -287,22 +322,24 @@ void ui_table_item_recycle(
     VADD(uit->cache, item_v);
 }
 
-void ui_table_evnt_event(view_t* view, view_t* rowview, vh_tbl_evnt_event_t type, int index, void* userdata, ev_t ev)
+void ui_table_evnt_event(vh_tbl_evnt_event_t event)
 {
-    ui_table_t* uit = (ui_table_t*) userdata;
+    ui_table_t* uit = (ui_table_t*) event.userdata;
 
-    if (type == VH_TBL_EVENT_SELECT)
+    if (event.id == VH_TBL_EVENT_SELECT)
     {
-	map_t* data = uit->items->data[index];
+	uit->selected_index = event.index;
 
-	uint32_t pos = vec_index_of_data(uit->selected, data);
+	map_t* data = uit->items->data[event.index];
+
+	uint32_t pos = vec_index_of_data(uit->selected_items, data);
 
 	if (pos == UINT32_MAX)
 	{
 	    // reset selected if control is not down
-	    if (!ev.ctrl_down)
+	    if (!event.ev.ctrl_down)
 	    {
-		vec_reset(uit->selected);
+		vec_reset(uit->selected_items);
 		vh_tbl_body_t* bvh = uit->body_v->handler_data;
 
 		for (int index = 0; index < bvh->items->length; index++)
@@ -310,43 +347,84 @@ void ui_table_evnt_event(view_t* view, view_t* rowview, vh_tbl_evnt_event_t type
 		    view_t* item = bvh->items->data[index];
 		    if (item->style.background_color == 0x006600FF)
 		    {
-			item->style.background_color = (bvh->head_index + index) % 2 != 0 ? (uint32_t) 0x353535388 : (uint32_t) 0x45454588;
+			item->style.background_color = 0x000000FF;
 			view_invalidate_texture(item);
 		    }
 		}
 	    }
 
-	    VADD(uit->selected, data);
-	    rowview->style.background_color = 0x006600FF;
-	    view_invalidate_texture(rowview);
+	    VADD(uit->selected_items, data);
+	    event.rowview->style.background_color = 0x006600FF;
+	    view_invalidate_texture(event.rowview);
 	}
 	else
 	{
-	    VREM(uit->selected, data);
-	    rowview->style.background_color = index % 2 != 0 ? 0x35353588 : 0x45454588;
-	    view_invalidate_texture(rowview);
+	    VREM(uit->selected_items, data);
+	    event.rowview->style.background_color = 0x000000FF;
+	    view_invalidate_texture(event.rowview);
 	}
 
-	(*uit->on_event)(uit, UI_TABLE_EVENT_SELECT, uit->selected);
+	ui_table_event_t tevent = {.table = uit, .id = UI_TABLE_EVENT_SELECT, .selected_items = uit->selected_items, .selected_index = event.index, .rowview = event.rowview};
+	(*uit->on_event)(tevent);
     }
-    if (type == VH_TBL_EVENT_OPEN)
+    else if (event.id == VH_TBL_EVENT_CONTEXT)
     {
-	// map_t* data = uit->items->data[index];
-	// uint32_t pos  = vec_index_of_data(uit->selected, data);
+	uit->selected_index = event.index;
 
-	(*uit->on_event)(uit, UI_TABLE_EVENT_OPEN, uit->selected);
+	map_t* data = uit->items->data[event.index];
+
+	uint32_t pos = vec_index_of_data(uit->selected_items, data);
+
+	if (pos == UINT32_MAX)
+	{
+	    // reset selected if control is not down
+	    if (!event.ev.ctrl_down)
+	    {
+		vec_reset(uit->selected_items);
+		vh_tbl_body_t* bvh = uit->body_v->handler_data;
+
+		for (int index = 0; index < bvh->items->length; index++)
+		{
+		    view_t* item = bvh->items->data[index];
+		    if (item->style.background_color == 0x006600FF)
+		    {
+			item->style.background_color = 0x000000FF;
+			view_invalidate_texture(item);
+		    }
+		}
+	    }
+
+	    VADD(uit->selected_items, data);
+
+	    if (event.rowview)
+	    {
+		event.rowview->style.background_color = 0x006600FF;
+		view_invalidate_texture(event.rowview);
+	    }
+	}
+
+	ui_table_event_t tevent = {.table = uit, .id = UI_TABLE_EVENT_CONTEXT, .selected_items = uit->selected_items, .selected_index = event.index, .rowview = event.rowview, .ev = event.ev};
+	(*uit->on_event)(tevent);
     }
-    if (type == VH_TBL_EVENT_DRAG)
+    else if (event.id == VH_TBL_EVENT_OPEN)
     {
-	(*uit->on_event)(uit, UI_TABLE_EVENT_DRAG, uit->selected);
+	ui_table_event_t tevent = {.table = uit, .id = UI_TABLE_EVENT_OPEN, .selected_items = uit->selected_items, .selected_index = event.index, .rowview = event.rowview};
+	(*uit->on_event)(tevent);
     }
-    if (type == VH_TBL_EVENT_DROP)
+    else if (event.id == VH_TBL_EVENT_DRAG)
     {
-	(*uit->on_event)(uit, UI_TABLE_EVENT_DROP, (void*) ((size_t) index));
+	ui_table_event_t tevent = {.table = uit, .id = UI_TABLE_EVENT_DRAG, .selected_items = uit->selected_items, .selected_index = event.index, .rowview = event.rowview};
+	(*uit->on_event)(tevent);
     }
-    if (type == VH_TBL_EVENT_KEY)
+    else if (event.id == VH_TBL_EVENT_DROP)
     {
-	(*uit->on_event)(uit, UI_TABLE_EVENT_KEY, (void*) &ev);
+	ui_table_event_t tevent = {.table = uit, .id = UI_TABLE_EVENT_DROP, .selected_items = uit->selected_items, .selected_index = event.index, .rowview = event.rowview};
+	(*uit->on_event)(tevent);
+    }
+    else if (event.id == VH_TBL_EVENT_KEY)
+    {
+	ui_table_event_t tevent = {.table = uit, .id = UI_TABLE_EVENT_KEY, .selected_items = uit->selected_items, .selected_index = uit->selected_index, .rowview = event.rowview, .ev = event.ev};
+	(*uit->on_event)(tevent);
     }
 }
 
@@ -356,10 +434,10 @@ void ui_table_del(
     ui_table_t* uit = p;
 
     // remove items from view
-    REL(uit->id);       // REL S0
-    REL(uit->cache);    // REL S1
-    REL(uit->fields);   // REL S2
-    REL(uit->selected); // REL S3
+    REL(uit->id);             // REL S0
+    REL(uit->cache);          // REL S1
+    REL(uit->fields);         // REL S2
+    REL(uit->selected_items); // REL S3
 
     if (uit->items) REL(uit->items);
 
@@ -382,17 +460,17 @@ ui_table_t* ui_table_create(
     view_t* evnt,
     view_t* head,
     vec_t*  fields,
-    void (*on_event)(ui_table_t* table, ui_table_event event, void* userdata))
+    void (*on_event)(ui_table_event_t event))
 {
     assert(id != NULL);
     assert(body != NULL);
 
-    ui_table_t* uit = CAL(sizeof(ui_table_t), ui_table_del, ui_table_desc);
-    uit->id         = cstr_new_cstring(id); // REL S0
-    uit->cache      = VNEW();               // REL S1
-    uit->fields     = RET(fields);          // REL S2
-    uit->selected   = VNEW();               // REL S3
-    uit->on_event   = on_event;
+    ui_table_t* uit     = CAL(sizeof(ui_table_t), ui_table_del, ui_table_desc);
+    uit->id             = cstr_new_cstring(id); // REL S0
+    uit->cache          = VNEW();               // REL S1
+    uit->fields         = RET(fields);          // REL S2
+    uit->selected_items = VNEW();               // REL S3
+    uit->on_event       = on_event;
 
     uit->body_v = RET(body);
 
@@ -452,10 +530,13 @@ void ui_table_set_data(
     if (uit->items) REL(uit->items);
     uit->items = RET(data);
 
+    uit->selected_index = 0;
+
+    vec_reset(uit->selected_items);
     if (uit->selected_index < uit->items->length)
     {
 	map_t* sel = uit->items->data[uit->selected_index];
-	VADD(uit->selected, sel);
+	VADD(uit->selected_items, sel);
     }
 
     vh_tbl_body_reset(uit->body_v);
@@ -470,36 +551,49 @@ void ui_table_select(
     ui_table_t* uit,
     int32_t     index)
 {
+    vh_tbl_body_t* bvh = uit->body_v->handler_data;
+
     uit->selected_index = index;
     if (uit->selected_index < 0) uit->selected_index = 0;
     if (uit->selected_index > uit->items->length - 1) uit->selected_index = uit->items->length - 1;
 
-    vh_tbl_body_t* bvh = uit->body_v->handler_data;
     if (bvh->bot_index <= uit->selected_index)
     {
-	vh_tbl_body_vjump(uit->body_v, uit->selected_index);
+	vh_tbl_body_vjump(uit->body_v, uit->selected_index + 1, 0);
+
+	if (bvh->tail_index == bvh->bot_index)
+	{
+	    // check if bottom item is out of bounds
+	    view_t* lastitem = vec_tail(bvh->items);
+	    r2_t    iframe   = lastitem->frame.local;
+	    r2_t    vframe   = uit->body_v->frame.local;
+
+	    if (iframe.y + iframe.h > vframe.h)
+	    {
+		vh_tbl_body_move(uit->body_v, 0, iframe.y + iframe.h - vframe.h);
+	    }
+	}
     }
+
     if (uit->selected_index <= bvh->top_index)
     {
-	vh_tbl_body_vjump(uit->body_v, uit->selected_index);
+	vh_tbl_body_vjump(uit->body_v, uit->selected_index - 1, 1);
     }
 
-    vec_reset(uit->selected);
+    vec_reset(uit->selected_items);
     map_t* sel = uit->items->data[uit->selected_index];
-    VADD(uit->selected, sel);
-
-    (*uit->on_event)(uit, UI_TABLE_EVENT_SELECT, uit->selected);
+    VADD(uit->selected_items, sel);
 
     /* color item */
 
-    for (int index = 0; index < bvh->items->length; index++)
+    for (int i = 0; i < bvh->items->length; i++)
     {
-	int     realindex = bvh->head_index + index;
-	view_t* item      = bvh->items->data[index];
+	int     realindex = bvh->head_index + i;
+	view_t* item      = bvh->items->data[i];
 
 	if (item->style.background_color == 0x006600FF)
 	{
-	    item->style.background_color = realindex % 2 != 0 ? (uint32_t) 0x353535388 : (uint32_t) 0x45454588;
+	    item->style.background_color = 0x000000FF;
 	    view_invalidate_texture(item);
 	}
 
@@ -509,6 +603,14 @@ void ui_table_select(
 	    view_invalidate_texture(item);
 	}
     }
+
+    /* ui_table_event_t event = {.table = uit, .id = UI_TABLE_EVENT_SELECT, .selected_items = uit->selected_items, .selected_index = index, .rowview = NULL}; */
+    /* (*uit->on_event)(event); */
+}
+
+vec_t* ui_table_get_fields(ui_table_t* uit)
+{
+    return uit->fields;
 }
 
 #endif

@@ -7,16 +7,30 @@
 #include "view.c"
 #include <limits.h>
 
-typedef enum _vh_tbl_evnt_event_t
+enum vh_tbl_evnt_event_id
 {
+    VH_TBL_EVENT_CONTEXT,
     VH_TBL_EVENT_SELECT,
     VH_TBL_EVENT_OPEN,
     VH_TBL_EVENT_DRAG,
     VH_TBL_EVENT_DROP,
     VH_TBL_EVENT_KEY
-} vh_tbl_evnt_event_t;
+};
 
-typedef struct _vh_tbl_evnt_t
+typedef struct _vh_tbl_evnt_t       vh_tbl_evnt_t;
+typedef struct _vh_tbl_evnt_event_t vh_tbl_evnt_event_t;
+
+struct _vh_tbl_evnt_event_t
+{
+    enum vh_tbl_evnt_event_id id;
+    view_t*                   view;
+    view_t*                   rowview;
+    int                       index;
+    ev_t                      ev;
+    void*                     userdata;
+};
+
+struct _vh_tbl_evnt_t
 {
     view_t* tbody_view;
     view_t* tscrl_view;
@@ -28,15 +42,15 @@ typedef struct _vh_tbl_evnt_t
     int     selected_index;
     float   sx;
     float   sy;
-    void (*on_event)(view_t* view, view_t* rowview, vh_tbl_evnt_event_t event, int index, void* userdata, ev_t ev);
-} vh_tbl_evnt_t;
+    void (*on_event)(vh_tbl_evnt_event_t event);
+};
 
 void vh_tbl_evnt_attach(
     view_t* view,
     view_t* tbody_view,
     view_t* tscrl_view,
     view_t* thead_view,
-    void (*on_event)(view_t* view, view_t* rowview, vh_tbl_evnt_event_t event, int index, void* userdata, ev_t ev),
+    void (*on_event)(vh_tbl_evnt_event_t event),
     void* userdata);
 
 #endif
@@ -134,7 +148,8 @@ void vh_tbl_evnt_evt(view_t* view, ev_t ev)
 	}
 	if (vh->selected_item && ev.drag)
 	{
-	    (*vh->on_event)(view, vh->selected_item, VH_TBL_EVENT_DRAG, 0, vh->userdata, ev);
+	    vh_tbl_evnt_event_t event = {.id = VH_TBL_EVENT_DRAG, .view = view, .rowview = vh->selected_item, .index = 0, .ev = ev, .userdata = vh->userdata};
+	    if (vh->on_event) (*vh->on_event)(event);
 
 	    vh->selected_item = NULL;
 	}
@@ -178,13 +193,23 @@ void vh_tbl_evnt_evt(view_t* view, ev_t ev)
 
 		    if (!ev.dclick)
 		    {
-			(*vh->on_event)(view, vh->selected_item, VH_TBL_EVENT_SELECT, bvh->head_index + index, vh->userdata, ev);
+			if (ev.button == 1)
+			{
+			    vh_tbl_evnt_event_t event = {.id = VH_TBL_EVENT_SELECT, .view = view, .rowview = vh->selected_item, .index = bvh->head_index + index, .ev = ev, .userdata = vh->userdata};
+			    if (vh->on_event) (*vh->on_event)(event);
+			}
 		    }
 		    else
 		    {
-			(*vh->on_event)(view, vh->selected_item, VH_TBL_EVENT_OPEN, bvh->head_index + index, vh->userdata, ev);
+			vh_tbl_evnt_event_t event = {.id = VH_TBL_EVENT_OPEN, .view = view, .rowview = vh->selected_item, .index = bvh->head_index + index, .ev = ev, .userdata = vh->userdata};
+			if (vh->on_event) (*vh->on_event)(event);
 		    }
 		    break;
+		}
+		if (ev.button == 3)
+		{
+		    vh_tbl_evnt_event_t event = {.id = VH_TBL_EVENT_CONTEXT, .view = view, .rowview = vh->selected_item, .index = bvh->head_index + index, .ev = ev, .userdata = vh->userdata};
+		    if (vh->on_event) (*vh->on_event)(event);
 		}
 	    }
 	}
@@ -211,14 +236,16 @@ void vh_tbl_evnt_evt(view_t* view, ev_t ev)
 		    }
 		}
 
-		(*vh->on_event)(view, vh->selected_item, VH_TBL_EVENT_DROP, bvh->head_index + index, vh->userdata, ev);
+		vh_tbl_evnt_event_t event = {.id = VH_TBL_EVENT_DROP, .view = view, .rowview = vh->selected_item, .index = bvh->head_index + index, .ev = ev, .userdata = vh->userdata};
+		if (vh->on_event) (*vh->on_event)(event);
 	    }
 	}
 	vh->scroll_drag = 0;
     }
     else if (ev.type == EV_KDOWN)
     {
-	(*vh->on_event)(view, NULL, VH_TBL_EVENT_KEY, 0, vh->userdata, ev);
+	vh_tbl_evnt_event_t event = {.id = VH_TBL_EVENT_KEY, .view = view, .rowview = vh->selected_item, .index = 0, .ev = ev, .userdata = vh->userdata};
+	if (vh->on_event) (*vh->on_event)(event);
     }
 }
 
@@ -236,7 +263,7 @@ void vh_tbl_evnt_attach(
     view_t* tbody_view,
     view_t* tscrl_view,
     view_t* thead_view,
-    void (*on_event)(view_t* view, view_t* rowview, vh_tbl_evnt_event_t event, int index, void* userdata, ev_t ev),
+    void (*on_event)(vh_tbl_evnt_event_t event),
     void* userdata)
 {
     assert(view->handler == NULL && view->handler_data == NULL);

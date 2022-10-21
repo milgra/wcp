@@ -44,7 +44,8 @@ void vh_tbl_body_hjump(
 
 void vh_tbl_body_vjump(
     view_t* view,
-    int     topindex);
+    int     topindex,
+    int     aligntop);
 
 #endif
 
@@ -296,9 +297,14 @@ void vh_tbl_body_hjump(
 
 void vh_tbl_body_vjump(
     view_t* view,
-    int     topindex)
+    int     topindex,
+    int     aligntop)
 {
     vh_tbl_body_t* vh = view->handler_data;
+
+    // invalidate items
+
+    int count = vh->bot_index - vh->top_index;
 
     for (int index = 0;
 	 index < vh->items->length;
@@ -311,10 +317,29 @@ void vh_tbl_body_vjump(
 
     vec_reset(vh->items);
 
-    vh->head_index = topindex;
-    vh->tail_index = topindex;
-    vh->top_index  = topindex;
-    vh->bot_index  = topindex;
+    // request new items
+
+    if (aligntop == 0)
+    {
+	topindex -= count;
+	int margin = vh->tail_index - vh->bot_index;
+	topindex += margin;
+	if (topindex < 0) topindex = 0;
+	vh->head_index = topindex;
+	vh->tail_index = topindex;
+	vh->top_index  = topindex;
+	vh->bot_index  = topindex;
+    }
+    else
+    {
+	int margin = vh->top_index - vh->head_index;
+	topindex -= margin;
+	if (topindex < 0) topindex = 0;
+	vh->head_index = topindex;
+	vh->tail_index = topindex;
+	vh->top_index  = topindex;
+	vh->bot_index  = topindex;
+    }
 
     vh_tbl_body_move(view, 0, 0);
 }

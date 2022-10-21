@@ -2,7 +2,6 @@
 #define vh_button_h
 
 #include "view.c"
-#include "zc_callback.c"
 
 typedef enum _vh_button_type_t
 {
@@ -16,19 +15,32 @@ typedef enum _vh_button_state_t
     VH_BUTTON_DOWN
 } vh_button_state_t;
 
-typedef struct _vh_button_t
+typedef struct _vh_button_t vh_button_t;
+
+enum vh_button_event_id
 {
-    cb_t*             event;
+    VH_BUTTON_EVENT
+};
+
+typedef struct _vh_button_event_t
+{
+    enum vh_button_event_id id;
+    vh_button_t*            vh;
+    view_t*                 view;
+} vh_button_event_t;
+
+struct _vh_button_t
+{
+    void (*on_event)(vh_button_event_t);
     vh_button_type_t  type;
     vh_button_state_t state;
 
     char    inited;
     view_t* offview;
     view_t* onview;
+};
 
-} vh_button_t;
-
-void vh_button_add(view_t* view, vh_button_type_t type, cb_t* event);
+void vh_button_add(view_t* view, vh_button_type_t type, void (*on_event)(vh_button_event_t));
 void vh_button_set_state(view_t* view, vh_button_state_t state);
 
 #endif
@@ -38,16 +50,16 @@ void vh_button_set_state(view_t* view, vh_button_state_t state);
 #include "vh_anim.c"
 #include "zc_log.c"
 
-void vh_button_anim_end(view_t* view, void* userdata)
+void vh_button_on_anim(vh_anim_event_t event)
 {
-    view_t*      btnview = (view_t*) userdata;
+    view_t*      btnview = (view_t*) event.userdata;
     vh_button_t* vh      = btnview->handler_data;
 
     // if offview alpha is 0 and state is released
 
     if (vh->type == VH_BUTTON_NORMAL)
     {
-	if (vh->offview->texture.alpha < 0.0001 && view == vh->offview)
+	if (vh->offview->texture.alpha < 0.0001 && event.view == vh->offview)
 	{
 	    vh_anim_alpha(vh->offview, 0.0, 1.0, 10, AT_LINEAR);
 	}
@@ -65,14 +77,12 @@ void vh_button_evt(view_t* view, ev_t ev)
 	    if (view->views->length > 0)
 	    {
 		vh->offview = view->views->data[0];
-		vh_anim_add(vh->offview);
-		vh_anim_set_event(vh->offview, view, vh_button_anim_end);
+		vh_anim_add(vh->offview, vh_button_on_anim, view);
 	    }
 	    if (view->views->length > 1)
 	    {
 		vh->onview = view->views->data[1];
-		vh_anim_add(vh->onview);
-		vh_anim_set_event(vh->onview, view, vh_button_anim_end);
+		vh_anim_add(vh->onview, vh_button_on_anim, view);
 	    }
 
 	    if (vh->offview) view_set_texture_alpha(vh->offview, 1.0, 0);
@@ -110,13 +120,16 @@ void vh_button_evt(view_t* view, ev_t ev)
 		if (vh->onview) vh_anim_alpha(vh->onview, 1.0, 0.0, 10, AT_LINEAR);
 	    }
 
-	    if (vh->event) (*vh->event->fp)(vh->event->userdata, view);
+	    vh_button_event_t event = {.id = VH_BUTTON_EVENT, .view = view, .vh = vh};
+	    if (vh->on_event) (*vh->on_event)(event);
 	}
 	else
 	{
 	    vh->state = VH_BUTTON_UP;
 
-	    if (vh->event) (*vh->event->fp)(vh->event->userdata, view);
+	    vh_button_event_t event = {.id = VH_BUTTON_EVENT, .view = view, .vh = vh};
+	    if (vh->on_event) (*vh->on_event)(event);
+
 	    /* if (vh->offview) vh_anim_alpha(vh->offview, 1.0, 0.0, 10, AT_LINEAR); */
 	    /* if (vh->onview) vh_anim_alpha(vh->onview, 0.0, 1.0, 10, AT_LINEAR); */
 	}
@@ -142,8 +155,7 @@ void vh_button_set_state(view_t* view, vh_button_state_t state)
 
 void vh_button_del(void* p)
 {
-    vh_button_t* vh = p;
-    if (vh->event) REL(vh->event);
+    /* vh_button_t* vh = p; */
 }
 
 void vh_button_desc(void* p, int level)
@@ -151,16 +163,14 @@ void vh_button_desc(void* p, int level)
     printf("vh_button");
 }
 
-void vh_button_add(view_t* view, vh_button_type_t type, cb_t* event)
+void vh_button_add(view_t* view, vh_button_type_t type, void (*on_event)(vh_button_event_t))
 {
     assert(view->handler == NULL && view->handler_data == NULL);
 
     vh_button_t* vh = CAL(sizeof(vh_button_t), vh_button_del, vh_button_desc);
-    vh->event       = event;
+    vh->on_event    = on_event;
     vh->type        = type;
     vh->state       = VH_BUTTON_UP;
-
-    if (event) RET(event);
 
     view->handler      = vh_button_evt;
     view->handler_data = vh;

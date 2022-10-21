@@ -133,8 +133,11 @@ void ui_manager_event(ev_t ev)
 	    }
 	}
 
-	vec_reset(uim.explqueue);
-	view_coll_touched(uim.root, ev, uim.explqueue);
+	if (ev.type == EV_MDOWN)
+	{
+	    vec_reset(uim.explqueue);
+	    view_coll_touched(uim.root, ev, uim.explqueue);
+	}
 
 	for (int i = uim.explqueue->length - 1; i > -1; i--)
 	{

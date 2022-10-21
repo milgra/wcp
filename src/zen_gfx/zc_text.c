@@ -3,7 +3,6 @@
 
 #include "zc_text.c"
 #include "zc_bm_rgba.c"
-#include "zc_string.c"
 #include <linux/limits.h>
 #include <stdint.h>
 
@@ -78,9 +77,9 @@ void text_render_glyphs(glyph_t* glyphs, int count, textstyle_t style, bm_rgba_t
 
 void text_layout(glyph_t* glyphs, int count, textstyle_t style, int wth, int hth, int* nwth, int* nhth);
 
-void text_render(str_t* text, textstyle_t style, bm_rgba_t* bitmap);
+void text_render(char* text, textstyle_t style, bm_rgba_t* bitmap);
 
-void text_measure(str_t* text, textstyle_t style, int w, int h, int* nw, int* nh);
+void text_measure(char* text, textstyle_t style, int w, int h, int* nw, int* nh);
 
 void text_describe_style(textstyle_t style);
 
@@ -103,6 +102,8 @@ void text_describe_glyphs(glyph_t* glyphs, int count);
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 #include FT_BITMAP_H
+
+#include "utf8.h"
 
 struct _txt_ft_t
 {
@@ -578,26 +579,42 @@ void text_layout(glyph_t* glyphs, int count, textstyle_t style, int wth, int hth
     text_shift_glyphs(glyphs, count, style);
 }
 
-void text_render(str_t* text, textstyle_t style, bm_rgba_t* bitmap)
+void text_render(char* text, textstyle_t style, bm_rgba_t* bitmap)
 {
-    glyph_t* glyphs = malloc(sizeof(glyph_t) * text->length); // REL 0
-    for (int i = 0; i < text->length; i++) glyphs[i].cp = text->codepoints[i];
+    const void*  part   = text;
+    size_t       count  = utf8len(text);
+    glyph_t*     glyphs = malloc(sizeof(glyph_t) * count); // REL 0
+    utf8_int32_t cp;
+
+    for (int i = 0; i < count; i++)
+    {
+	part         = utf8codepoint(part, &cp);
+	glyphs[i].cp = cp;
+    }
 
     int nw;
     int nh;
 
-    text_layout(glyphs, text->length, style, bitmap->w, bitmap->h, &nw, &nh);
-    text_render_glyphs(glyphs, text->length, style, bitmap);
+    text_layout(glyphs, count, style, bitmap->w, bitmap->h, &nw, &nh);
+    text_render_glyphs(glyphs, count, style, bitmap);
 
     free(glyphs); // REL 1
 }
 
-void text_measure(str_t* text, textstyle_t style, int w, int h, int* nw, int* nh)
+void text_measure(char* text, textstyle_t style, int w, int h, int* nw, int* nh)
 {
-    glyph_t* glyphs = malloc(sizeof(glyph_t) * text->length); // REL 0
-    for (int i = 0; i < text->length; i++) glyphs[i].cp = text->codepoints[i];
+    const void*  part   = text;
+    size_t       count  = utf8len(text);
+    glyph_t*     glyphs = malloc(sizeof(glyph_t) * count); // REL 0
+    utf8_int32_t cp;
 
-    text_break_glyphs(glyphs, text->length, style, w, h, nw, nh);
+    for (int i = 0; i < count; i++)
+    {
+	part         = utf8codepoint(part, &cp);
+	glyphs[i].cp = cp;
+    }
+
+    text_break_glyphs(glyphs, count, style, w, h, nw, nh);
 
     free(glyphs); // REL 1
 }

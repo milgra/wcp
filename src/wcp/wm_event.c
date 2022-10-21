@@ -43,6 +43,8 @@ typedef struct _ev_t
     int dclick;
     int ctrl_down;
     int shift_down;
+
+    int keycode;
 } ev_t;
 
 #endif

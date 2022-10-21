@@ -3,16 +3,30 @@
 
 #include "view.c"
 #include "wm_event.c"
-#include "zc_callback.c"
 
-typedef struct _vh_drag_t
+enum vh_drag_event_id
 {
-    cb_t*   movecb;
-    cb_t*   dropcb;
-    view_t* dragged_view;
-} vh_drag_t;
+    VH_DRAG_MOVE,
+    VH_DRAG_DROP
+};
 
-void vh_drag_attach(view_t* view, cb_t* movecb, cb_t* dropcb);
+typedef struct _vh_drag_t vh_drag_t;
+
+typedef struct _vh_drag_event_t
+{
+    enum vh_drag_event_id id;
+    vh_drag_t*            vh;
+    view_t*               view;
+    view_t*               dragged_view;
+} vh_drag_event_t;
+
+struct _vh_drag_t
+{
+    void (*on_event)(vh_drag_event_t);
+    view_t* dragged_view;
+};
+
+void vh_drag_attach(view_t* view, void (*on_event)(vh_drag_event_t));
 void vh_drag_drag(view_t* view, view_t* item);
 
 #endif
@@ -34,7 +48,8 @@ void vh_drag_evt(view_t* view, ev_t ev)
 	    frame.y    = ev.y - frame.h / 2;
 	    view_set_frame(vh->dragged_view, frame);
 
-	    if (vh->movecb) (*vh->movecb->fp)(view, vh->dragged_view);
+	    vh_drag_event_t event = {.id = VH_DRAG_MOVE, .vh = vh, .view = view, .dragged_view = vh->dragged_view};
+	    if (vh->on_event) (*vh->on_event)(event);
 	}
     }
     if (ev.type == EV_MUP && ev.drag)
@@ -43,7 +58,8 @@ void vh_drag_evt(view_t* view, ev_t ev)
 
 	if (vh->dragged_view)
 	{
-	    if (vh->dropcb) (*vh->dropcb->fp)(view, vh->dragged_view);
+	    vh_drag_event_t event = {.id = VH_DRAG_DROP, .vh = vh, .view = view, .dragged_view = vh->dragged_view};
+	    if (vh->on_event) (*vh->on_event)(event);
 
 	    REL(vh->dragged_view);
 	    vh->dragged_view = NULL;
@@ -56,22 +72,18 @@ void vh_drag_del(void* p)
     vh_drag_t* vh = p;
 
     if (vh->dragged_view) REL(vh->dragged_view);
-    if (vh->movecb) REL(vh->movecb);
-    if (vh->dropcb) REL(vh->dropcb);
 }
 
 void vh_drag_desc(void* p, int level)
 {
 }
 
-void vh_drag_attach(view_t* view, cb_t* movecb, cb_t* dropcb)
+void vh_drag_attach(view_t* view, void (*on_event)(vh_drag_event_t))
 {
     assert(view->handler == NULL && view->handler_data == NULL);
 
     vh_drag_t* vh = CAL(sizeof(vh_drag_t), vh_drag_del, vh_drag_desc);
-
-    if (movecb) vh->movecb = RET(movecb);
-    if (dropcb) vh->dropcb = RET(dropcb);
+    vh->on_event  = on_event;
 
     view->needs_touch  = 1;
     view->handler_data = vh;

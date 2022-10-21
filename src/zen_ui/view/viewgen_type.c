@@ -1,10 +1,11 @@
 #ifndef viewgen_type_h
 #define viewgen_type_h
 
-#include "zc_callback.c"
+#include "vh_button.c"
+#include "vh_slider.c"
 #include "zc_vector.c"
 
-void viewgen_type_apply(vec_t* views, cb_t* callback);
+void viewgen_type_apply(vec_t* views, void (*button_event)(vh_button_event_t), void (*slider_event)(vh_slider_event_t));
 
 #endif
 
@@ -12,11 +13,9 @@ void viewgen_type_apply(vec_t* views, cb_t* callback);
 
 #include "tg_css.c"
 #include "tg_text.c"
-#include "vh_button.c"
-#include "vh_slider.c"
 #include "view.c"
 
-void viewgen_type_apply(vec_t* views, cb_t* callback)
+void viewgen_type_apply(vec_t* views, void (*button_event)(vh_button_event_t), void (*slider_event)(vh_slider_event_t))
 {
     for (int index = 0; index < views->length; index++)
     {
@@ -37,11 +36,11 @@ void viewgen_type_apply(vec_t* views, cb_t* callback)
 
 	if (view->type && strcmp(view->type, "button") == 0)
 	{
-	    vh_button_add(view, VH_BUTTON_NORMAL, callback);
+	    vh_button_add(view, VH_BUTTON_NORMAL, button_event);
 	}
 	else if (view->type && strcmp(view->type, "slider") == 0)
 	{
-	    vh_slider_add(view, callback);
+	    vh_slider_add(view, slider_event);
 	}
     }
 }

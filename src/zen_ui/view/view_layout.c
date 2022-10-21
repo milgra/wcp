@@ -14,8 +14,6 @@ void view_layout(view_t* view);
 
 void view_layout(view_t* view)
 {
-    // view_t* v;
-
     float act_x = 0;
     float act_y = 0;
     float rel_w = view->frame.local.w; // remaining width for relative views
@@ -60,10 +58,20 @@ void view_layout(view_t* view)
 	view_t* v     = view->views->data[i];
 	r2_t    frame = v->frame.local;
 
-	if (v->style.margin > 0)
+	if (v->style.margin == INT_MAX)
 	{
 	    frame.x = 0;
 	    frame.y = 0;
+	}
+
+	if (v->style.margin_top < INT_MAX || v->style.margin_bottom < INT_MAX)
+	{
+	    frame.y = 0;
+	}
+
+	if (v->style.margin_left < INT_MAX || v->style.margin_right < INT_MAX)
+	{
+	    frame.x = 0;
 	}
 
 	if (v->style.width > 0)

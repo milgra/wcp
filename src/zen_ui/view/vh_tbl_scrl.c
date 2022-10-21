@@ -198,7 +198,7 @@ void vh_tbl_scrl_scroll_v(view_t* view, int y)
 	    if (pratio > 1.0) pratio = 1.0;
 	    int topindex = pratio * (vert_max - vert_vis);
 
-	    vh_tbl_body_vjump(vh->tbody_view, topindex);
+	    vh_tbl_body_vjump(vh->tbody_view, topindex, 1);
 
 	    r2_t frame = vh->vert_v->frame.local;
 	    frame.h    = view->frame.local.h * sratio;

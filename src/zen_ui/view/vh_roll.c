@@ -3,16 +3,29 @@
 
 #include "view.c"
 #include "wm_event.c"
-#include "zc_callback.c"
 
-typedef struct _vh_roll_t
+enum vh_roll_event_id
 {
-  char  active;
-  cb_t* roll_in;
-  cb_t* roll_out;
-} vh_roll_t;
+    VH_ROLL_IN,
+    VH_ROLL_OUT
+};
 
-void vh_roll_add(view_t* view, cb_t* roll_in, cb_t* roll_out);
+typedef struct _vh_roll_t vh_roll_t;
+
+typedef struct _vh_roll_event_t
+{
+    enum vh_roll_event_id id;
+    vh_roll_t*            vh;
+    view_t*               view;
+} vh_roll_event_t;
+
+struct _vh_roll_t
+{
+    char active;
+    void (*on_event)(vh_roll_event_t);
+};
+
+void vh_roll_add(view_t* view, void (*on_event)(vh_roll_event_t));
 
 #endif
 
@@ -20,67 +33,63 @@ void vh_roll_add(view_t* view, cb_t* roll_in, cb_t* roll_out);
 
 void vh_roll_evt(view_t* view, ev_t ev)
 {
-  if (ev.type == EV_MMOVE)
-  {
-    vh_roll_t* vh    = view->handler_data;
-    r2_t       frame = view->frame.global;
-
-    if (!vh->active)
+    if (ev.type == EV_MMOVE)
     {
-      if (ev.x >= frame.x &&
-          ev.x <= frame.x + frame.w &&
-          ev.y >= frame.y &&
-          ev.y <= frame.y + frame.h)
-      {
-        vh->active = 1;
-        (*vh->roll_in->fp)(vh->roll_in->userdata, view);
-      }
-    }
-  }
-  else if (ev.type == EV_MMOVE_OUT)
-  {
-    vh_roll_t* vh    = view->handler_data;
-    r2_t       frame = view->frame.global;
+	vh_roll_t* vh    = view->handler_data;
+	r2_t       frame = view->frame.global;
 
-    if (vh->active)
-    {
-      if (ev.x < frame.x ||
-          ev.x > frame.x + frame.w ||
-          ev.y < frame.y ||
-          ev.y > frame.y + frame.h)
-      {
-        vh->active = 0;
-        (*vh->roll_out->fp)(vh->roll_out->userdata, view);
-      }
+	if (!vh->active)
+	{
+	    if (ev.x >= frame.x &&
+		ev.x <= frame.x + frame.w &&
+		ev.y >= frame.y &&
+		ev.y <= frame.y + frame.h)
+	    {
+		vh->active = 1;
+
+		vh_roll_event_t event = {.id = VH_ROLL_IN, .view = view, .vh = vh};
+		if (vh->on_event) (*vh->on_event)(event);
+	    }
+	}
     }
-  }
+    else if (ev.type == EV_MMOVE_OUT)
+    {
+	vh_roll_t* vh    = view->handler_data;
+	r2_t       frame = view->frame.global;
+
+	if (vh->active)
+	{
+	    if (ev.x < frame.x ||
+		ev.x > frame.x + frame.w ||
+		ev.y < frame.y ||
+		ev.y > frame.y + frame.h)
+	    {
+		vh->active            = 0;
+		vh_roll_event_t event = {.id = VH_ROLL_OUT, .view = view, .vh = vh};
+		if (vh->on_event) (*vh->on_event)(event);
+	    }
+	}
+    }
 }
 
 void vh_roll_del(void* p)
 {
-  vh_roll_t* vh = p;
-  if (vh->roll_in) REL(vh->roll_in);
-  if (vh->roll_out) REL(vh->roll_out);
 }
 
 void vh_roll_desc(void* p, int level)
 {
-  printf("vh_roll");
+    printf("vh_roll");
 }
 
-void vh_roll_add(view_t* view, cb_t* roll_in, cb_t* roll_out)
+void vh_roll_add(view_t* view, void (*on_event)(vh_roll_event_t))
 {
-  assert(view->handler == NULL && view->handler_data == NULL);
+    assert(view->handler == NULL && view->handler_data == NULL);
 
-  vh_roll_t* vh = CAL(sizeof(vh_roll_t), vh_roll_del, vh_roll_desc);
-  vh->roll_in   = roll_in;
-  vh->roll_out  = roll_out;
+    vh_roll_t* vh = CAL(sizeof(vh_roll_t), vh_roll_del, vh_roll_desc);
+    vh->on_event  = on_event;
 
-  if (roll_in) RET(roll_in);
-  if (roll_out) RET(roll_out);
-
-  view->handler_data = vh;
-  view->handler      = vh_roll_evt;
+    view->handler_data = vh;
+    view->handler      = vh_roll_evt;
 }
 
 #endif

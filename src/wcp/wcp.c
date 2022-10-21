@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 	   "If you like this app try :\n"
 	   "- Sway Oveview ( github.com/milgra/sov )\n"
 	   "- Visual Music Player (github.com/milgra/vmp)\n"
-	   "- Multimedia File Manager (github.com/milgra/wcp)\n"
+	   "- Multimedia File Manager (github.com/milgra/mmfm)\n"
 	   "- SwayOS (swayos.github.io)\n"
 	   "Games :\n"
 	   "- Brawl (github.com/milgra/brawl)\n"

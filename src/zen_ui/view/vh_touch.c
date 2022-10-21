@@ -2,9 +2,27 @@
 #define vh_touch_h
 
 #include "view.c"
-#include "zc_callback.c"
 
-void vh_touch_add(view_t* view, cb_t* event);
+typedef struct _vh_touch_t vh_touch_t;
+
+enum vh_touch_event_id
+{
+    VH_TOUCH_EVENT
+};
+
+typedef struct _vh_touch_event_t
+{
+    enum vh_touch_event_id id;
+    vh_touch_t*            vh;
+    view_t*                view;
+} vh_touch_event_t;
+
+struct _vh_touch_t
+{
+    void (*on_event)(vh_touch_event_t);
+};
+
+void vh_touch_add(view_t* view, void (*on_event)(vh_touch_event_t));
 
 #endif
 
@@ -12,42 +30,37 @@ void vh_touch_add(view_t* view, cb_t* event);
 
 #include "wm_event.c"
 
-typedef struct _vh_touch_t
-{
-  cb_t* event;
-} vh_touch_t;
-
 void vh_touch_evt(view_t* view, ev_t ev)
 {
-  if (ev.type == EV_MDOWN)
-  {
-    vh_touch_t* vh = view->handler_data;
-    if (vh->event) (*vh->event->fp)(vh->event->userdata, view);
-  }
+    if (ev.type == EV_MDOWN)
+    {
+	vh_touch_t*      vh    = view->handler_data;
+	vh_touch_event_t event = {.id = VH_TOUCH_EVENT, .vh = vh, .view = view};
+	if (vh->on_event) (*vh->on_event)(event);
+    }
 }
 
 void vh_touch_del(void* p)
 {
-  vh_touch_t* vh = p;
-  if (vh->event) REL(vh->event);
+    /* vh_touch_t* vh = p; */
 }
 
 void vh_touch_desc(void* p, int level)
 {
-  printf("vh_touch");
+    printf("vh_touch");
 }
 
-void vh_touch_add(view_t* view, cb_t* event)
+void vh_touch_add(view_t* view, void (*on_event)(vh_touch_event_t))
 {
-  assert(view->handler == NULL && view->handler_data == NULL);
+    assert(view->handler == NULL && view->handler_data == NULL);
 
-  vh_touch_t* vh = CAL(sizeof(vh_touch_t), vh_touch_del, vh_touch_desc);
-  vh->event      = event;
+    vh_touch_t* vh = CAL(sizeof(vh_touch_t), vh_touch_del, vh_touch_desc);
+    vh->on_event   = on_event;
 
-  if (event) RET(event);
+    view->handler      = vh_touch_evt;
+    view->handler_data = vh;
 
-  view->handler      = vh_touch_evt;
-  view->handler_data = vh;
+    view->needs_touch = 1;
 }
 
 #endif
