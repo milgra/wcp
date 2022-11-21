@@ -1,31 +1,53 @@
 project(
   'wcp',
   'c',
-  version: '0.52',
-  license: 'GPLv3',
+  version: '0.6b',
+  license: 'MIT',
   default_options: ['c_std=gnu99']
 )
 
-pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'wcp'
-
-add_project_arguments(
-  [
-    '-DPKG_DATADIR="' + pkg_datadir + '"',
-    '-DWCP_VERSION="@0@"'.format(meson.project_version()),
-  ],
-  language : 'c'
-)
-
-if get_option('buildtype') == 'debug'
-    add_project_arguments('-DDEBUG',language: 'c')
-endif
-
 cc = meson.get_compiler('c')
 
-math = cc.find_library('m',static:false)
 png = cc.find_library('png',static:false)
 freetype = cc.find_library('freetype',static:false)
+math = cc.find_library('m',static:false)
+z = cc.find_library('z',static:false)
+bz2 = cc.find_library('bz2',static:false)
+rt = cc.find_library('rt',static:false)
+gl = cc.find_library('GL',static:false)
+glew = cc.find_library('GLEW',static:false)
+sdl2 = cc.find_library('SDL2',static:false)
+wegl = cc.find_library('wayland-egl',static:false)
+swscale = cc.find_library('swscale',static:false)
+pthread = cc.find_library('pthread',static:false)
+jpeg = cc.find_library('jpeg',static:false)
+jbig = cc.find_library('jbig2dec',static:false)
+ojpeg = cc.find_library('openjp2',static:false)
+hb = cc.find_library('harfbuzz',static:false)
+gumbo = cc.find_library('gumbo',static:false)
+avutil = cc.find_library('avutil',static:false)
+avcodec = cc.find_library('avcodec',static:false)
+avdevice = cc.find_library('avdevice',static:false)
+avformat = cc.find_library('avformat',static:false)
+avfilter = cc.find_library('avfilter',static:false)
+swresample = cc.find_library('swresample',static:false)
+egl = cc.find_library('EGL',static:false)
+
+xkbcommon = dependency('xkbcommon')
+
+# for ffmpeg
+#va = cc.find_library('va',static:false)
+#x11 = cc.find_library('X11',static:false)
+#lvadrm = cc.find_library('va-drm',static:false)
+#lvax11 = cc.find_library('va-x11',static:false)
+#lzma = cc.find_library('lzma',static:false)
+#lvdpau = cc.find_library('vdpau',static:false)
+
+mupdf = cc.find_library('mupdf')
+mupdfthird = cc.find_library('mupdf-third')
+
 wayland_client      = dependency('wayland-client')
+wayland_cursor      = dependency('wayland-cursor')
 wayland_protos      = dependency('wayland-protocols')
 wayland_scanner_dep = dependency('wayland-scanner')
 wayland_scanner     = find_program(
@@ -37,6 +59,7 @@ wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
 protocols = [
   [wl_protocol_dir, 'stable/xdg-shell/xdg-shell.xml'],
   [wl_protocol_dir, 'unstable/xdg-output/xdg-output-unstable-v1.xml'],
+  [wl_protocol_dir, 'unstable/pointer-gestures/pointer-gestures-unstable-v1.xml'],
   'wlr-layer-shell-unstable-v1.xml'
 ]
 
@@ -59,98 +82,139 @@ foreach p : protocols
   )
 endforeach
 
-wcp_deps = [
-  wayland_client,
-  freetype,
-  png,
-  math
-]
 
-wcp_inc = include_directories('src/wcp',
-			      'src/wcp/ui',
-			      'src/wcp/utils',
-			      'src/zen_core',
-			      'src/zen_math',
-			      'src/zen_ui',
-			      'src/zen_ui/view',
-			      'src/zen_ui/html',
-			      'src/zen_gfx',
-			      '/usr/include/freetype2')
+wcp_dependencies = [
+		  wayland_client,
+		  wayland_cursor,
+		  png,
+		  rt,
+		  freetype,
+		  math,
+		  gl,
+		  glew,
+		  sdl2,
+		  avutil,
+		  avcodec,
+		  avdevice,
+		  avformat,
+		  avfilter,
+		  swresample,
+		  swscale,
+		  pthread,
+		  jpeg,
+		  ojpeg,
+		  jbig,
+		  hb,
+		  z,
+		  bz2,
+		  gumbo,
+		  mupdf,
+		  mupdfthird,
+		  xkbcommon,
+		  egl,
+		  wegl]
 
-wcp_src = [    'src/wcp/wcp.c',
-	       'src/wcp/wl_connector.c',
-	       'src/wcp/wm_event.c',
+wcp_version = '"@0@"'.format(meson.project_version())
+pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'wcp'
+add_project_arguments('-DPKG_DATADIR="' + pkg_datadir + '"',
+		      '-DWCP_VERSION=@0@'.format(wcp_version),
+		      language: 'c')
+add_project_arguments('-Wno-unused-but-set-variable', language: 'c')
+
+if get_option('buildtype') == 'debug'
+    add_project_arguments('-DDEBUG',language: 'c')
+endif
+
+wcp_inc = include_directories(
+	'/usr/include',
+	'/usr/include/GLES2',
+	'/usr/include/EGL',
+	'/usr/include/SDL2',
+	'/usr/include/mupdf',
+	'/usr/include/freetype2',
+	'src/mt_math',
+	'src/mt_core',
+	'src/kinetic_ui',
+	'src/kinetic_ui/egl',
+	'src/kinetic_ui/handler',
+	'src/kinetic_ui/texture',
+	'src/wcp',
+	'src/mt_core_ext')
+
+
+com_sources = ['src/wcp/ui.c',
 	       'src/wcp/config.c',
+	       'src/wcp/kvlist.c',
+	       'src/wcp/wcp.c',
 
-	       'src/wcp/ui/ui.c',
+	       'src/mt_core_ext/mt_bitmap_ext.c',
+	       'src/mt_core_ext/mt_string_ext.c',
+	       'src/mt_core_ext/mt_map_ext.c',
 
-	       'src/wcp/utils/bm_rgba_util.c',
-	       'src/wcp/utils/cstr_util.c',
-	       'src/wcp/utils/map_util.c',
+	       'src/mt_core/mt_channel.c',
+	       'src/mt_core/mt_string.c',
+	       'src/mt_core/mt_path.c',
+	       'src/mt_core/mt_log.c',
+	       'src/mt_core/mt_map.c',
+	       'src/mt_core/mt_memory.c',
+	       'src/mt_core/mt_number.c',
+	       'src/mt_core/mt_time.c',
+	       'src/mt_core/mt_vector.c',
+	       'src/mt_core/mt_wrapper.c',
 
-	       'src/zen_math/zc_mat3.c',
-	       'src/zen_math/zc_mat4.c',
-	       'src/zen_math/zc_vec2.c',
-	       'src/zen_math/zc_vec3.c',
-	       'src/zen_math/zc_vec4.c',
-	       'src/zen_math/zc_util2.c',
-	       'src/zen_math/zc_util3.c',
+	       'src/mt_math/mt_matrix_3d.c',
+	       'src/mt_math/mt_matrix_4d.c',
+	       'src/mt_math/mt_vector_2d.c',
+	       'src/mt_math/mt_vector_3d.c',
+	       'src/mt_math/mt_vector_4d.c',
+	       'src/mt_math/mt_math_2d.c',
+	       'src/mt_math/mt_math_3d.c',
 
-	       'src/zen_core/zc_bm_rgba.c',
-	       'src/zen_core/zc_channel.c',
-	       'src/zen_core/zc_cstring.c',
-	       'src/zen_core/zc_path.c',
-	       'src/zen_core/zc_log.c',
-	       'src/zen_core/zc_map.c',
-	       'src/zen_core/zc_memory.c',
-	       'src/zen_core/zc_number.c',
-	       'src/zen_core/zc_time.c',
-	       'src/zen_core/zc_vector.c',
-	       'src/zen_core/zc_wrapper.c',
+	       'src/kinetic_ui/ku_event.c',
+	       'src/kinetic_ui/ku_html.c',
+	       'src/kinetic_ui/ku_css.c',
+	       'src/kinetic_ui/egl/ku_gl.c',
+	       'src/kinetic_ui/ku_rect.c',
+	       'src/kinetic_ui/ku_bitmap.c',
+	       'src/kinetic_ui/texture/tg_css.c',
+	       'src/kinetic_ui/texture/tg_knob.c',
+	       'src/kinetic_ui/texture/tg_text.c',
+	       'src/kinetic_ui/texture/tg_scaledimg.c',
+	       'src/kinetic_ui/handler/vh_anim.c',
+	       'src/kinetic_ui/handler/vh_button.c',
+	       'src/kinetic_ui/handler/vh_drag.c',
+	       'src/kinetic_ui/handler/vh_key.c',
+	       'src/kinetic_ui/handler/vh_knob.c',
+	       'src/kinetic_ui/handler/vh_roll.c',
+	       'src/kinetic_ui/handler/vh_slider.c',
+	       'src/kinetic_ui/handler/vh_textinput.c',
+	       'src/kinetic_ui/handler/vh_touch.c',
+	       'src/kinetic_ui/handler/vh_cv_body.c',
+	       'src/kinetic_ui/handler/vh_cv_scrl.c',
+	       'src/kinetic_ui/handler/vh_cv_evnt.c',
+	       'src/kinetic_ui/handler/vh_tbl_body.c',
+	       'src/kinetic_ui/handler/vh_tbl_evnt.c',
+	       'src/kinetic_ui/handler/vh_tbl_scrl.c',
+	       'src/kinetic_ui/handler/vh_tbl_head.c',
+	       'src/kinetic_ui/handler/vh_table.c',
+	       'src/kinetic_ui/ku_view.c',
+	       'src/kinetic_ui/egl/ku_gl_atlas.c',
+	       'src/kinetic_ui/egl/ku_gl_floatbuffer.c',
+	       'src/kinetic_ui/egl/ku_gl_shader.c',
+	       'src/kinetic_ui/ku_gen_html.c',
+	       'src/kinetic_ui/ku_gen_css.c',
+	       'src/kinetic_ui/ku_gen_type.c',
+	       'src/kinetic_ui/ku_renderer_egl.c',
+	       'src/kinetic_ui/ku_renderer_soft.c',
+	       'src/kinetic_ui/ku_fontconfig.c',
+	       'src/kinetic_ui/ku_connector_wayland.c',
+	       'src/kinetic_ui/ku_window.c',
+	       'src/kinetic_ui/ku_png.c',
+	       'src/kinetic_ui/ku_draw.c',
+	       'src/kinetic_ui/ku_text.c',
+	       'src/kinetic_ui/ku_gen_textstyle.c'] + protos_src + protos_headers
 
-	       'src/zen_gfx/zc_draw.c',
-	       'src/zen_gfx/zc_text.c',
-
-	       'src/zen_ui/html/html.c',
-	       'src/zen_ui/html/css.c',
-	       'src/zen_ui/view/tg_css.c',
-	       'src/zen_ui/view/tg_knob.c',
-	       'src/zen_ui/view/tg_text.c',
-	       'src/zen_ui/view/tg_scaledimg.c',
-	       'src/zen_ui/view/vh_anim.c',
-	       'src/zen_ui/view/vh_button.c',
-	       'src/zen_ui/view/vh_drag.c',
-	       'src/zen_ui/view/vh_key.c',
-	       'src/zen_ui/view/vh_knob.c',
-	       'src/zen_ui/view/vh_slider.c',
-	       'src/zen_ui/view/vh_roll.c',
-	       'src/zen_ui/view/vh_textinput.c',
-	       'src/zen_ui/view/vh_touch.c',
-	       'src/zen_ui/view/vh_cv_body.c',
-	       'src/zen_ui/view/vh_cv_scrl.c',
-	       'src/zen_ui/view/vh_cv_evnt.c',
-	       'src/zen_ui/view/vh_tbl_body.c',
-	       'src/zen_ui/view/vh_tbl_evnt.c',
-	       'src/zen_ui/view/vh_tbl_scrl.c',
-	       'src/zen_ui/view/vh_tbl_head.c',
-	       'src/zen_ui/view/view.c',
-	       'src/zen_ui/view/viewgen_html.c',
-	       'src/zen_ui/view/viewgen_css.c',
-	       'src/zen_ui/view/viewgen_type.c',
-	       'src/zen_ui/view/view_layout.c',
-	       'src/zen_ui/view/views.c',
-	       'src/zen_ui/fontconfig.c',
-	       'src/zen_ui/ui_generator.c',
-	       'src/zen_ui/ui_manager.c',
-	       'src/zen_ui/ui_texmap.c',
-	       'src/zen_ui/ui_table.c',
-	       'src/zen_ui/ui_util.c'] + protos_src + protos_headers
-
-executable('wcp',
-	    wcp_src,
-	     include_directories: [wcp_inc],
-	    dependencies: wcp_deps,
-	    install: true)
+pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'wcp'
 
 install_data('res/html/main.html', install_dir : pkg_datadir / 'html' )
 install_data('res/html/main.css', install_dir : pkg_datadir / 'html' )
@@ -177,3 +241,16 @@ install_data('res/script/shutdown.sh', install_dir : pkg_datadir / 'script' )
 install_data('res/script/suspend.sh', install_dir : pkg_datadir / 'script' )
 install_data('res/script/volume.sh', install_dir : pkg_datadir / 'script' )
 install_data('res/script/wifi-label.sh', install_dir : pkg_datadir / 'script' )
+
+
+executable(
+  'wcp',
+  com_sources,
+  include_directories: [wcp_inc],
+  dependencies: wcp_dependencies,
+  install: true,
+)
+
+e = executable('maintest', 'src/tests/test.c')
+
+test('MAIN TEST', e)

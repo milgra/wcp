@@ -1,7 +1,7 @@
 #ifndef config_h
 #define config_h
 
-#include "zc_map.c"
+#include "mt_map.c"
 
 void  config_init();
 void  config_destroy();
@@ -18,12 +18,12 @@ void  config_set_bool(char* key, int val);
 #if __INCLUDE_LEVEL__ == 0
 
 #include "kvlist.c"
-#include "zc_cstring.c"
-#include "zc_log.c"
-#include "zc_path.c"
+#include "mt_log.c"
+#include "mt_path.c"
+#include "mt_string.c"
 #include <limits.h>
 
-map_t* confmap;
+mt_map_t* confmap;
 
 void config_init()
 {
@@ -37,7 +37,7 @@ void config_destroy()
 
 void config_set(char* key, char* value)
 {
-    char* str = cstr_new_cstring(value); // REL 0
+    char* str = mt_string_new_cstring(value); // REL 0
     MPUT(confmap, key, str);
     REL(str); // REL 0
 }
@@ -69,11 +69,11 @@ void config_set_bool(char* key, int val)
 {
     if (val)
     {
-	MPUTR(confmap, key, cstr_new_cstring("true"));
+	MPUTR(confmap, key, mt_string_new_cstring("true"));
     }
     else
     {
-	MPUTR(confmap, key, cstr_new_cstring("false"));
+	MPUTR(confmap, key, mt_string_new_cstring("false"));
     }
 }
 

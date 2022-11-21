@@ -1,12 +1,14 @@
 #include "config.c"
+#include "ku_bitmap.c"
+#include "ku_connector_wayland.c"
+#include "ku_draw.c"
+#include "ku_event.c"
+#include "ku_renderer_soft.c"
+#include "ku_window.c"
+#include "mt_log.c"
+#include "mt_path.c"
+#include "mt_time.c"
 #include "ui.c"
-#include "ui_manager.c"
-#include "wl_connector.c"
-#include "zc_bm_rgba.c"
-#include "zc_draw.c"
-#include "zc_log.c"
-#include "zc_path.c"
-#include "zc_time.c"
 #include <dirent.h>
 #include <getopt.h>
 #include <limits.h>
@@ -14,34 +16,72 @@
 #include <time.h>
 #include <unistd.h>
 
-void init(int width, int height, float scale)
+struct
 {
-    ui_init(width, height, scale); // DESTROY 3
+    struct wl_window* wlwindow;
+    ku_window_t*      kuwindow;
+    ku_rect_t         dirtyrect;
+
+    int   width;
+    int   height;
+    int   margin;
+    char* anchor;
+} wcp = {0};
+
+void init(wl_event_t event)
+{
+    struct monitor_info* monitor = event.monitors[0];
+
+    /* wcp.wlwindow = ku_wayland_create_window("wcp", 1200, 600); */
+    wcp.wlwindow = ku_wayland_create_generic_layer(monitor, wcp.width, wcp.height, wcp.margin, wcp.anchor);
+    wcp.kuwindow = ku_window_create(monitor->logical_width, monitor->logical_height);
+
+    ui_init(monitor->logical_width, monitor->logical_height, monitor->scale, wcp.kuwindow);
 }
 
-void update(ev_t ev)
-{
-    if (ev.type == EV_WINDOW_SHOW) ui_load_values();
+/* window update */
 
-    ui_manager_event(ev);
-    wl_connector_draw();
-}
-
-void render(uint32_t time, uint32_t index, bm_rgba_t* bm)
+void update(ku_event_t ev)
 {
-    ui_manager_render(0, bm);
+    ku_window_event(wcp.kuwindow, ev);
+
+    if (wcp.wlwindow->frame_cb == NULL)
+    {
+	ku_rect_t dirty = ku_window_update(wcp.kuwindow, 0);
+
+	if (dirty.w > 0 && dirty.h > 0)
+	{
+	    ku_rect_t sum = ku_rect_add(dirty, wcp.dirtyrect);
+
+	    mt_log_debug("drt %i %i %i %i", (int) dirty.x, (int) dirty.y, (int) dirty.w, (int) dirty.h);
+	    mt_log_debug("drt prev %i %i %i %i", (int) wcp.dirtyrect.x, (int) wcp.dirtyrect.y, (int) wcp.dirtyrect.w, (int) wcp.dirtyrect.h);
+	    mt_log_debug("sum aftr %i %i %i %i", (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h);
+
+	    /* mt_time(NULL); */
+	    ku_renderer_software_render(wcp.kuwindow->views, &wcp.wlwindow->bitmap, sum);
+	    /* mt_time("Render"); */
+
+	    ku_wayland_draw_window(wcp.wlwindow, (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h);
+
+	    wcp.dirtyrect = dirty;
+	}
+    }
 }
 
 void destroy()
 {
+    ku_wayland_delete_window(wcp.wlwindow);
     ui_destroy();
+
+    REL(wcp.anchor);
+    REL(wcp.kuwindow);
 }
 
 int main(int argc, char* argv[])
 {
-    zc_log_use_colors(isatty(STDERR_FILENO));
-    zc_log_level_info();
-    zc_time(NULL);
+    mt_log_use_colors(isatty(STDERR_FILENO));
+    mt_log_level_info();
+    mt_time(NULL);
 
     printf("Wayland Control Panel v" WCP_VERSION
 	   " by Milan Toth ( www.milgra.com )\n"
@@ -60,6 +100,7 @@ int main(int argc, char* argv[])
 	"\n"
 	"  -h, --help                            Show help message and quit.\n"
 	"  -v, --verbose                         Increase verbosity of messages, defaults to errors and warnings only.\n"
+	"  -a, --anchor=[lrtp]                   Anchor window to window edge in directions, use rt for right top\n"
 	"  -f, --frame=[width]x[height]          Initial window dimension\n"
 	"  -m, --margin=[size]                   Margin\n"
 	"  -r, --resources=[resources folder]    Resources dir for current session\n"
@@ -69,6 +110,7 @@ int main(int argc, char* argv[])
 	{
 	    {"help", no_argument, NULL, 'h'},
 	    {"verbose", no_argument, NULL, 'v'},
+	    {"anchor", optional_argument, NULL, 'a'},
 	    {"frame", optional_argument, NULL, 'f'},
 	    {"margin", optional_argument, NULL, 'm'},
 	    {"resources", optional_argument, 0, 'r'}};
@@ -76,19 +118,21 @@ int main(int argc, char* argv[])
     char* res_par = NULL;
     char* frm_par = NULL;
     char* mrg_par = NULL;
+    char* anc_par = NULL;
 
     int verbose      = 0;
     int option       = 0;
     int option_index = 0;
 
-    while ((option = getopt_long(argc, argv, "vhr:f:m:", long_options, &option_index)) != -1)
+    while ((option = getopt_long(argc, argv, "vhr:f:m:a:", long_options, &option_index)) != -1)
     {
 	switch (option)
 	{
 	    case '?': printf("parsing option %c value: %s\n", option, optarg); break;
-	    case 'r': res_par = cstr_new_cstring(optarg); break; // REL 0
-	    case 'f': frm_par = cstr_new_cstring(optarg); break; // REL 1
-	    case 'm': mrg_par = cstr_new_cstring(optarg); break; // REL 2
+	    case 'a': anc_par = mt_string_new_cstring(optarg); break; // REL 0
+	    case 'r': res_par = mt_string_new_cstring(optarg); break; // REL 0
+	    case 'f': frm_par = mt_string_new_cstring(optarg); break; // REL 1
+	    case 'm': mrg_par = mt_string_new_cstring(optarg); break; // REL 2
 	    case 'v': verbose = 1; break;
 	    default: fprintf(stderr, "%s", usage); return EXIT_FAILURE;
 	}
@@ -99,11 +143,11 @@ int main(int argc, char* argv[])
     char cwd[PATH_MAX] = {"~"};
     if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
 
-    char* wrk_path = path_new_normalize(cwd, NULL); // REL 3
+    char* wrk_path = mt_path_new_normalize(cwd, NULL); // REL 3
 
     char* res_path     = NULL;
-    char* res_path_loc = res_par ? path_new_normalize(res_par, wrk_path) : path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 4
-    char* res_path_glo = cstr_new_cstring(PKG_DATADIR);                                                                         // REL 5
+    char* res_path_loc = res_par ? mt_path_new_normalize(res_par, wrk_path) : mt_path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 4
+    char* res_path_glo = mt_string_new_cstring(PKG_DATADIR);                                                                          // REL 5
 
     DIR* dir = opendir(res_path_loc);
     if (dir)
@@ -113,9 +157,9 @@ int main(int argc, char* argv[])
     }
     else res_path = res_path_glo;
 
-    char* css_path  = path_new_append(res_path, "html/main.css");  // REL 6
-    char* html_path = path_new_append(res_path, "html/main.html"); // REL 7
-    char* scr_path  = path_new_append(res_path, "script");         // REL 8
+    char* css_path  = mt_path_new_append(res_path, "html/main.css");  // REL 6
+    char* html_path = mt_path_new_append(res_path, "html/main.html"); // REL 7
+    char* scr_path  = mt_path_new_append(res_path, "script");         // REL 8
 
     // print path info to console
 
@@ -126,7 +170,7 @@ int main(int argc, char* argv[])
     printf("script path   : %s\n", scr_path);
     printf("\n");
 
-    if (verbose) zc_log_inc_verbosity();
+    if (verbose) mt_log_inc_verbosity();
 
     // init config
 
@@ -140,23 +184,26 @@ int main(int argc, char* argv[])
     config_set("html_path", html_path);
     config_set("scr_path", scr_path);
 
-    int width  = 300;
-    int height = 300;
-    int margin = 0;
+    wcp.width  = 300;
+    wcp.height = 300;
+    wcp.margin = 0;
+
+    if (anc_par) wcp.anchor = anc_par;
+    else wcp.anchor = "";
 
     if (frm_par != NULL)
     {
-	width      = atoi(frm_par);
+	wcp.width  = atoi(frm_par);
 	char* next = strstr(frm_par, "x");
-	height     = atoi(next + 1);
+	wcp.height = atoi(next + 1);
     }
 
     if (mrg_par != NULL)
     {
-	margin = atoi(mrg_par);
+	wcp.margin = atoi(mrg_par);
     }
 
-    wl_connector_init(width, height, margin, init, update, render, destroy);
+    ku_wayland_init(init, update, destroy, 0);
 
     /* show in wayland buffer */
 
@@ -175,7 +222,7 @@ int main(int argc, char* argv[])
     REL(html_path);    // REL 7
     REL(scr_path);     // REL 8
 
-#ifdef DEBUG
-    mem_stats();
+#ifdef MT_MEMORY_DEBUG
+    mt_memory_stats();
 #endif
 }
