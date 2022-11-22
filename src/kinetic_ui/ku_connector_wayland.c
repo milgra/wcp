@@ -105,10 +105,13 @@ enum wl_window_type
 
 struct wl_window
 {
-    int scale;
-    int width;
-    int height;
-    int fullscreen;
+    int  scale;
+    int  width;
+    int  height;
+    int  fullscreen;
+    int  hidden;
+    int  margin;
+    char anchor[4];
 
     enum wl_window_type type;
 
@@ -163,6 +166,9 @@ void ku_wayland_delete_layer();
 
 void ku_wayland_hide_window(struct wl_window* info);
 void ku_wayland_show_window(struct wl_window* info);
+
+void ku_wayland_hide_layer(struct wl_window* info);
+void ku_wayland_show_layer(struct wl_window* info);
 
 void ku_wayland_exit();
 void ku_wayland_toggle_fullscreen();
@@ -437,6 +443,12 @@ static void ku_wayland_layer_surface_configure(void* data, struct zwlr_layer_sur
 
     if (info->width != info->new_width && info->height != info->new_height)
     {
+	if (info->type == WL_WINDOW_NATIVE)
+	{
+	    /* resize native buffer */
+	    ku_wayland_resize_window_buffer(info);
+	}
+
 	ku_event_t event = init_event();
 	event.type       = KU_EVENT_RESIZE;
 	event.w          = info->new_width;
@@ -444,11 +456,11 @@ static void ku_wayland_layer_surface_configure(void* data, struct zwlr_layer_sur
 
 	(*wlc.update)(event);
     }
-
-    if (info->type == WL_WINDOW_NATIVE)
+    else if (info->hidden)
     {
-	/* resize native buffer */
-	ku_wayland_resize_window_buffer(info);
+	info->hidden = 0;
+	wl_surface_attach(info->surface, info->buffer, 0, 0);
+	wl_surface_commit(info->surface);
     }
 }
 
@@ -761,34 +773,108 @@ struct wl_window* ku_wayland_create_eglwindow(char* title, int width, int height
 
 void ku_wayland_delete_window(struct wl_window* info)
 {
-    if (info->frame_cb)
+    if (info->hidden == 0)
     {
-	wl_callback_destroy(info->frame_cb);
-	info->frame_cb = NULL;
-    }
+	if (info->frame_cb)
+	{
+	    wl_callback_destroy(info->frame_cb);
+	    info->frame_cb = NULL;
+	}
 
-    if (info->type == WL_WINDOW_NATIVE)
+	if (info->type == WL_WINDOW_NATIVE || info->type == WL_WINDOW_EGL)
+	{
+	    if (info->type == WL_WINDOW_NATIVE)
+	    {
+	    }
+	    else if (info->type == WL_WINDOW_EGL)
+	    {
+		eglMakeCurrent(info->egldisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+		eglDestroyContext(info->egldisplay, info->eglcontext);
+		eglDestroySurface(info->egldisplay, info->eglsurface);
+
+		wl_region_destroy(info->region);
+		wl_egl_window_destroy(info->eglwindow);
+
+		/* TODO ask wayland devs how to free up egl display properly because now it leaks */
+		eglTerminate(info->egldisplay);
+		eglReleaseThread();
+	    }
+
+	    xdg_surface_destroy(info->xdg_surface);
+	    xdg_toplevel_destroy(info->xdg_toplevel);
+	}
+
+	if (info->type == WL_WINDOW_LAYER)
+	{
+	    zwlr_layer_surface_v1_destroy(info->layer_surface);
+	}
+
+	wl_surface_destroy(info->surface);
+	wl_display_roundtrip(wlc.display);
+    }
+}
+
+void ku_wayland_hide_layer(struct wl_window* info)
+{
+    if (info->hidden == 0)
     {
+	info->hidden = 1;
+	zwlr_layer_surface_v1_destroy(info->layer_surface);
+	wl_surface_destroy(info->surface);
+
+	info->surface       = NULL;
+	info->layer_surface = NULL;
     }
-    else if (info->type == WL_WINDOW_EGL)
+}
+
+void ku_wayland_show_layer(struct wl_window* info)
+{
+    if (info->hidden == 1)
     {
-	eglMakeCurrent(info->egldisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+	info->surface = wl_compositor_create_surface(wlc.compositor);
 
-	eglDestroyContext(info->egldisplay, info->eglcontext);
-	eglDestroySurface(info->egldisplay, info->eglsurface);
+	info->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
+	    wlc.layer_shell,
+	    info->surface,
+	    info->monitor->wl_output,
+	    ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
+	    "wcp");
 
-	wl_region_destroy(info->region);
-	wl_egl_window_destroy(info->eglwindow);
+	zwlr_layer_surface_v1_set_size(
+	    info->layer_surface,
+	    info->new_width,
+	    info->new_height);
 
-	/* TODO ask wayland devs how to free up egl display properly because now it leaks */
-	eglTerminate(info->egldisplay);
-	eglReleaseThread();
+	uint  af     = 0;
+	char* anchor = info->anchor;
+	while (*anchor != '\0')
+	{
+	    if (*anchor == 'l') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
+	    if (*anchor == 'r') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+	    if (*anchor == 't') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+	    if (*anchor == 'b') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+	    anchor++;
+	}
+
+	zwlr_layer_surface_v1_set_anchor(
+	    info->layer_surface,
+	    af);
+
+	zwlr_layer_surface_v1_set_margin(
+	    info->layer_surface,
+	    info->margin,
+	    info->margin,
+	    info->margin,
+	    info->margin);
+
+	zwlr_layer_surface_v1_add_listener(info->layer_surface, &layer_surface_listener, info);
+
+	wl_surface_commit(info->surface);
+
+	info->frame_cb = wl_surface_frame(info->surface);
+	wl_callback_add_listener(info->frame_cb, &wl_surface_frame_listener, info);
     }
-
-    xdg_surface_destroy(info->xdg_surface);
-    xdg_toplevel_destroy(info->xdg_toplevel);
-    wl_surface_destroy(info->surface);
-    wl_display_roundtrip(wlc.display);
 }
 
 struct wl_window* ku_wayland_create_generic_layer(struct monitor_info* monitor, int width, int height, int margin, char* anchor)
@@ -800,54 +886,14 @@ struct wl_window* ku_wayland_create_generic_layer(struct monitor_info* monitor, 
     info->new_scale  = 1;
     info->new_width  = width;
     info->new_height = height;
-    info->width      = width;
-    info->height     = height;
+    info->margin     = margin;
+    info->monitor    = monitor;
+    info->hidden     = 1;
+    memcpy(info->anchor, anchor, 4);
 
     info->type = WL_WINDOW_NATIVE;
 
-    info->surface = wl_compositor_create_surface(wlc.compositor);
-    /* wl_surface_add_listener(info->surface, &wl_surface_listener, info); */
-
-    info->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-	wlc.layer_shell,
-	info->surface,
-	monitor->wl_output,
-	ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
-	"wcp");
-
-    zwlr_layer_surface_v1_set_size(
-	info->layer_surface,
-	width,
-	height);
-
-    uint af = 0;
-    while (*anchor != '\0')
-    {
-	if (*anchor == 'l') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
-	if (*anchor == 'r') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
-	if (*anchor == 't') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
-	if (*anchor == 'b') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
-	anchor++;
-    }
-
-    zwlr_layer_surface_v1_set_anchor(
-	info->layer_surface,
-	af);
-
-    zwlr_layer_surface_v1_set_margin(
-	info->layer_surface,
-	margin,
-	margin,
-	margin,
-	margin);
-
-    zwlr_layer_surface_v1_add_listener(info->layer_surface, &layer_surface_listener, info);
-
-    /* request configure event */
-    wl_surface_commit(info->surface);
-
-    info->frame_cb = wl_surface_frame(info->surface);
-    wl_callback_add_listener(info->frame_cb, &wl_surface_frame_listener, info);
+    ku_wayland_show_layer(info);
 
     return info;
 }
@@ -1546,7 +1592,7 @@ void ku_wayland_init(
 
 	    ku_wayland_set_time_event_delay(time_event_interval);
 
-	    while (1)
+	    while (!wlc.exit_flag)
 	    {
 		if (wl_display_flush(wlc.display) < 0)
 		{
@@ -1600,10 +1646,9 @@ void ku_wayland_init(
 			event.text[1]    = '\0';
 
 			(*wlc.update)(event);
+			break;
 		    }
 		}
-
-		if (wlc.exit_flag) break;
 	    }
 
 	    (*wlc.destroy)();
@@ -1630,7 +1675,9 @@ void ku_wayland_init(
 
 void ku_wayland_exit()
 {
+    printf("EXIT!!!\n");
     wlc.exit_flag = 1;
+    wl_display_flush(wlc.display);
 }
 
 /* request fullscreen */

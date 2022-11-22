@@ -34,7 +34,7 @@ void init(wl_event_t event)
 
     /* wcp.wlwindow = ku_wayland_create_window("wcp", 1200, 600); */
     wcp.wlwindow = ku_wayland_create_generic_layer(monitor, wcp.width, wcp.height, wcp.margin, wcp.anchor);
-    wcp.kuwindow = ku_window_create(monitor->logical_width, monitor->logical_height);
+    wcp.kuwindow = ku_window_create(wcp.width, wcp.height);
 
     ui_init(monitor->logical_width, monitor->logical_height, monitor->scale, wcp.kuwindow);
 }
@@ -43,6 +43,27 @@ void init(wl_event_t event)
 
 void update(ku_event_t ev)
 {
+    if (ev.type == KU_EVENT_STDIN)
+    {
+	if (ev.text[0] == '0' && wcp.wlwindow->hidden == 0) ku_wayland_hide_layer(wcp.wlwindow);
+	if (ev.text[0] == '1' && wcp.wlwindow->hidden == 1)
+	{
+	    ku_wayland_show_layer(wcp.wlwindow);
+	    ui_load_values();
+	}
+	if (ev.text[0] == '2')
+	{
+	    if (wcp.wlwindow->hidden == 0) ku_wayland_hide_layer(wcp.wlwindow);
+	    else if (wcp.wlwindow->hidden == 1)
+	    {
+		ku_wayland_show_layer(wcp.wlwindow);
+		ui_load_values();
+	    }
+	}
+	if (ev.text[0] == '3') ku_wayland_exit();
+    }
+    if (ev.type == KU_EVENT_MUP) ku_wayland_hide_layer(wcp.wlwindow);
+
     ku_window_event(wcp.kuwindow, ev);
 
     if (wcp.wlwindow->frame_cb == NULL)
@@ -53,9 +74,9 @@ void update(ku_event_t ev)
 	{
 	    ku_rect_t sum = ku_rect_add(dirty, wcp.dirtyrect);
 
-	    mt_log_debug("drt %i %i %i %i", (int) dirty.x, (int) dirty.y, (int) dirty.w, (int) dirty.h);
-	    mt_log_debug("drt prev %i %i %i %i", (int) wcp.dirtyrect.x, (int) wcp.dirtyrect.y, (int) wcp.dirtyrect.w, (int) wcp.dirtyrect.h);
-	    mt_log_debug("sum aftr %i %i %i %i", (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h);
+	    /* mt_log_debug("drt %i %i %i %i", (int) dirty.x, (int) dirty.y, (int) dirty.w, (int) dirty.h); */
+	    /* mt_log_debug("drt prev %i %i %i %i", (int) wcp.dirtyrect.x, (int) wcp.dirtyrect.y, (int) wcp.dirtyrect.w, (int) wcp.dirtyrect.h); */
+	    /* mt_log_debug("sum aftr %i %i %i %i", (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h); */
 
 	    /* mt_time(NULL); */
 	    ku_renderer_software_render(wcp.kuwindow->views, &wcp.wlwindow->bitmap, sum);

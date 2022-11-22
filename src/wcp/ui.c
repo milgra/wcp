@@ -41,11 +41,13 @@ void ui_load_values();
 
 struct _ui_t
 {
-    ku_view_t*   view_base;
-    mt_vector_t* view_list;
-    char*        command;
-    pthread_t    thread;
-    ku_window_t* window;
+    ku_view_t*      view_base;
+    mt_vector_t*    view_list;
+    char*           command;
+    pthread_t       thread;
+    ku_window_t*    window;
+    pthread_cond_t  comm_cond;
+    pthread_mutex_t comm_mutex;
 } ui;
 
 int ui_execute_command(char* command, char** result)
@@ -63,6 +65,15 @@ void* ui_command_thread(void* data)
 {
     while (1)
     {
+	int r;
+	if ((r = pthread_mutex_lock(&ui.comm_mutex)) != 0)
+	{
+	    fprintf(stderr, "Error = %d (%s)\n", r, strerror(r));
+	    exit(1);
+	}
+
+	pthread_cond_wait(&ui.comm_cond, &ui.comm_mutex);
+
 	if (ui.command)
 	{
 	    char* result = mt_string_new_cstring("");
@@ -72,7 +83,12 @@ void* ui_command_thread(void* data)
 	    REL(result);
 	    ui.command = NULL;
 	}
-	else usleep(100);
+
+	if ((r = pthread_mutex_unlock(&ui.comm_mutex)) != 0)
+	{
+	    fprintf(stderr, "Error = %d (%s)\n", r, strerror(r));
+	    exit(1);
+	}
     }
 
     return NULL;
@@ -90,6 +106,7 @@ void ui_on_button_event(vh_button_event_t event)
 	char* command = mt_string_new_format(200, "sh %s%s 1", script, event.view->script);
 	ui.command    = command;
 	REL(script);
+	pthread_cond_signal(&ui.comm_cond);
     }
 
     /* ku_wayland_hide_window(ui.window); */
@@ -105,6 +122,7 @@ void ui_on_slider_event(vh_slider_event_t event)
 	char* command = mt_string_new_format(200, "sh %s%s %i", script, event.view->script, ratio);
 	ui.command    = command;
 	REL(script);
+	pthread_cond_signal(&ui.comm_cond);
     }
 }
 
@@ -143,6 +161,9 @@ void ui_init(int width, int height, float scale, ku_window_t* window)
 
     ui.window    = window;
     ui.view_list = VNEW();
+
+    pthread_cond_init(&ui.comm_cond, NULL);
+    pthread_mutex_init(&ui.comm_mutex, NULL);
 
     pthread_create(&ui.thread, NULL, &ui_command_thread, NULL);
 
