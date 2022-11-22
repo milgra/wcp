@@ -33,7 +33,7 @@ void init(wl_event_t event)
     struct monitor_info* monitor = event.monitors[0];
 
     /* wcp.wlwindow = ku_wayland_create_window("wcp", 1200, 600); */
-    wcp.wlwindow = ku_wayland_create_generic_layer(monitor, wcp.width, wcp.height, wcp.margin, wcp.anchor);
+    wcp.wlwindow = ku_wayland_create_generic_layer(monitor, wcp.width, wcp.height, wcp.margin, wcp.anchor, 0);
     wcp.kuwindow = ku_window_create(wcp.width, wcp.height);
 
     ui_init(monitor->logical_width, monitor->logical_height, monitor->scale, wcp.kuwindow, wcp.wlwindow);

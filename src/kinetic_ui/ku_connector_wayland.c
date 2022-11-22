@@ -160,7 +160,7 @@ struct wl_window* ku_wayland_create_eglwindow(char* title, int width, int height
 void ku_wayland_draw_window(struct wl_window* info, int x, int y, int w, int h);
 void ku_wayland_delete_window(struct wl_window* info);
 
-struct wl_window* ku_wayland_create_generic_layer(struct monitor_info* monitor, int width, int height, int margin, char* anchor);
+struct wl_window* ku_wayland_create_generic_layer(struct monitor_info* monitor, int width, int height, int margin, char* anchor, int show);
 
 void ku_wayland_delete_layer();
 
@@ -887,7 +887,7 @@ void ku_wayland_show_window(struct wl_window* info)
     }
 }
 
-struct wl_window* ku_wayland_create_generic_layer(struct monitor_info* monitor, int width, int height, int margin, char* anchor)
+struct wl_window* ku_wayland_create_generic_layer(struct monitor_info* monitor, int width, int height, int margin, char* anchor, int show)
 {
     struct wl_window* info = CAL(sizeof(struct wl_window), NULL, NULL);
 
@@ -903,7 +903,7 @@ struct wl_window* ku_wayland_create_generic_layer(struct monitor_info* monitor, 
 
     info->type = WL_WINDOW_LAYER;
 
-    ku_wayland_show_window(info);
+    if (show) ku_wayland_show_window(info);
 
     return info;
 }
