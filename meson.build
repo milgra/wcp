@@ -16,35 +16,11 @@ bz2 = cc.find_library('bz2',static:false)
 rt = cc.find_library('rt',static:false)
 gl = cc.find_library('GL',static:false)
 glew = cc.find_library('GLEW',static:false)
-sdl2 = cc.find_library('SDL2',static:false)
 wegl = cc.find_library('wayland-egl',static:false)
-swscale = cc.find_library('swscale',static:false)
 pthread = cc.find_library('pthread',static:false)
-jpeg = cc.find_library('jpeg',static:false)
-jbig = cc.find_library('jbig2dec',static:false)
-ojpeg = cc.find_library('openjp2',static:false)
-hb = cc.find_library('harfbuzz',static:false)
-gumbo = cc.find_library('gumbo',static:false)
-avutil = cc.find_library('avutil',static:false)
-avcodec = cc.find_library('avcodec',static:false)
-avdevice = cc.find_library('avdevice',static:false)
-avformat = cc.find_library('avformat',static:false)
-avfilter = cc.find_library('avfilter',static:false)
-swresample = cc.find_library('swresample',static:false)
 egl = cc.find_library('EGL',static:false)
 
 xkbcommon = dependency('xkbcommon')
-
-# for ffmpeg
-#va = cc.find_library('va',static:false)
-#x11 = cc.find_library('X11',static:false)
-#lvadrm = cc.find_library('va-drm',static:false)
-#lvax11 = cc.find_library('va-x11',static:false)
-#lzma = cc.find_library('lzma',static:false)
-#lvdpau = cc.find_library('vdpau',static:false)
-
-mupdf = cc.find_library('mupdf')
-mupdfthird = cc.find_library('mupdf-third')
 
 wayland_client      = dependency('wayland-client')
 wayland_cursor      = dependency('wayland-cursor')
@@ -92,24 +68,9 @@ wcp_dependencies = [
 		  math,
 		  gl,
 		  glew,
-		  sdl2,
-		  avutil,
-		  avcodec,
-		  avdevice,
-		  avformat,
-		  avfilter,
-		  swresample,
-		  swscale,
 		  pthread,
-		  jpeg,
-		  ojpeg,
-		  jbig,
-		  hb,
 		  z,
 		  bz2,
-		  gumbo,
-		  mupdf,
-		  mupdfthird,
 		  xkbcommon,
 		  egl,
 		  wegl]
@@ -129,7 +90,6 @@ wcp_inc = include_directories(
 	'/usr/include',
 	'/usr/include/GLES2',
 	'/usr/include/EGL',
-	'/usr/include/SDL2',
 	'/usr/include/mupdf',
 	'/usr/include/freetype2',
 	'src/mt_math',
