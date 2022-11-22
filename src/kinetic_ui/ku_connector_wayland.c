@@ -1462,6 +1462,7 @@ static void ku_wayland_handle_global(
 
     if (strcmp(interface, wl_compositor_interface.name) == 0)
     {
+	/* TODO LEAKS!!! */
 	wlc.compositor = wl_registry_bind(registry, name, &wl_compositor_interface, 4);
     }
     else if (strcmp(interface, wl_seat_interface.name) == 0)
@@ -1529,7 +1530,7 @@ static void ku_wayland_handle_global(
 
 static void ku_wayland_handle_global_remove(void* data, struct wl_registry* registry, uint32_t name)
 {
-    /* mt_log_debug("handle global remove"); */
+    mt_log_debug("handle global remove");
 }
 
 static const struct wl_registry_listener registry_listener =
@@ -1662,17 +1663,17 @@ void ku_wayland_init(
 	}
 	else mt_log_error("compositor not found");
 
+	for (int m = 0; m < wlc.monitor_count; m++) free(wlc.monitors[m]);
+	for (int w = 0; w < wlc.monitor_count; w++) free(wlc.windows[w]);
+
 	wl_surface_destroy(wlc.cursor_surface);
-	if (wlc.cursor_theme)
-	    wl_cursor_theme_destroy(wlc.cursor_theme);
+	if (wlc.cursor_theme) wl_cursor_theme_destroy(wlc.cursor_theme);
 
 	wl_compositor_destroy(wlc.compositor);
 
 	wl_display_disconnect(wlc.display);
     }
     else mt_log_debug("cannot open display");
-
-    REL(wlc.windows[0]);
 
     REL(wlc.monitors);
     REL(wlc.windows);
