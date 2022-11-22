@@ -443,7 +443,7 @@ static void ku_wayland_layer_surface_configure(void* data, struct zwlr_layer_sur
 
     if (info->width != info->new_width && info->height != info->new_height)
     {
-	if (info->type == WL_WINDOW_NATIVE)
+	if (info->type == WL_WINDOW_NATIVE || info->type == WL_WINDOW_LAYER)
 	{
 	    /* resize native buffer */
 	    ku_wayland_resize_window_buffer(info);
@@ -531,7 +531,7 @@ static void xdg_surface_configure(void* data, struct xdg_surface* xdg_surface, u
 	(*wlc.update)(event);
     }
 
-    if (info->type == WL_WINDOW_NATIVE)
+    if (info->type == WL_WINDOW_NATIVE || info->type == WL_WINDOW_LAYER)
     {
 	/* resize native buffer */
 	ku_wayland_resize_window_buffer(info);
@@ -597,7 +597,7 @@ static void wl_surface_enter(void* userData, struct wl_surface* surface, struct 
 		info->new_scale = monitor->scale;
 
 		/* request re-scale with resizing */
-		if (info->type == WL_WINDOW_NATIVE) ku_wayland_resize_window_buffer(info);
+		if (info->type == WL_WINDOW_NATIVE || info->type == WL_WINDOW_LAYER) ku_wayland_resize_window_buffer(info);
 
 		/* TODO re-scale in case of EGL window also */
 	    }
@@ -820,6 +820,13 @@ void ku_wayland_hide_layer(struct wl_window* info)
     if (info->hidden == 0)
     {
 	info->hidden = 1;
+
+	if (info->frame_cb)
+	{
+	    wl_callback_destroy(info->frame_cb);
+	    info->frame_cb = NULL;
+	}
+
 	zwlr_layer_surface_v1_destroy(info->layer_surface);
 	wl_surface_destroy(info->surface);
 
@@ -891,7 +898,7 @@ struct wl_window* ku_wayland_create_generic_layer(struct monitor_info* monitor, 
     info->hidden     = 1;
     memcpy(info->anchor, anchor, 4);
 
-    info->type = WL_WINDOW_NATIVE;
+    info->type = WL_WINDOW_LAYER;
 
     ku_wayland_show_layer(info);
 
@@ -928,7 +935,7 @@ void ku_wayland_draw_window(struct wl_window* info, int x, int y, int w, int h)
 	info->frame_cb = wl_surface_frame(info->surface);
 	wl_callback_add_listener(info->frame_cb, &wl_surface_frame_listener, info);
 
-	if (info->type == WL_WINDOW_NATIVE)
+	if (info->type == WL_WINDOW_NATIVE || info->type == WL_WINDOW_LAYER)
 	{
 	    wl_surface_attach(info->surface, info->buffer, 0, 0);
 	    wl_surface_damage(info->surface, x, y, w, h);
