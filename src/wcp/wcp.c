@@ -36,7 +36,7 @@ void init(wl_event_t event)
     wcp.wlwindow = ku_wayland_create_generic_layer(monitor, wcp.width, wcp.height, wcp.margin, wcp.anchor);
     wcp.kuwindow = ku_window_create(wcp.width, wcp.height);
 
-    ui_init(monitor->logical_width, monitor->logical_height, monitor->scale, wcp.kuwindow);
+    ui_init(monitor->logical_width, monitor->logical_height, monitor->scale, wcp.kuwindow, wcp.wlwindow);
 }
 
 /* window update */
@@ -45,24 +45,23 @@ void update(ku_event_t ev)
 {
     if (ev.type == KU_EVENT_STDIN)
     {
-	if (ev.text[0] == '0' && wcp.wlwindow->hidden == 0) ku_wayland_hide_layer(wcp.wlwindow);
+	if (ev.text[0] == '0' && wcp.wlwindow->hidden == 0) ku_wayland_hide_window(wcp.wlwindow);
 	if (ev.text[0] == '1' && wcp.wlwindow->hidden == 1)
 	{
-	    ku_wayland_show_layer(wcp.wlwindow);
+	    ku_wayland_show_window(wcp.wlwindow);
 	    ui_load_values();
 	}
 	if (ev.text[0] == '2')
 	{
-	    if (wcp.wlwindow->hidden == 0) ku_wayland_hide_layer(wcp.wlwindow);
+	    if (wcp.wlwindow->hidden == 0) ku_wayland_hide_window(wcp.wlwindow);
 	    else if (wcp.wlwindow->hidden == 1)
 	    {
-		ku_wayland_show_layer(wcp.wlwindow);
+		ku_wayland_show_window(wcp.wlwindow);
 		ui_load_values();
 	    }
 	}
 	if (ev.text[0] == '3') ku_wayland_exit();
     }
-    if (ev.type == KU_EVENT_MUP) ku_wayland_hide_layer(wcp.wlwindow);
 
     ku_window_event(wcp.kuwindow, ev);
 
@@ -180,6 +179,7 @@ int main(int argc, char* argv[])
 
     char* css_path  = mt_path_new_append(res_path, "html/main.css");  // REL 6
     char* html_path = mt_path_new_append(res_path, "html/main.html"); // REL 7
+    char* img_path  = mt_path_new_append(res_path, "img");            // REL 6
     char* scr_path  = mt_path_new_append(res_path, "script");         // REL 8
 
     // print path info to console
@@ -188,6 +188,7 @@ int main(int argc, char* argv[])
     printf("resource path : %s\n", res_path);
     printf("css path      : %s\n", css_path);
     printf("html path     : %s\n", html_path);
+    printf("image path    : %s\n", img_path);
     printf("script path   : %s\n", scr_path);
     printf("\n");
 
@@ -204,6 +205,7 @@ int main(int argc, char* argv[])
     config_set("css_path", css_path);
     config_set("html_path", html_path);
     config_set("scr_path", scr_path);
+    config_set("img_path", img_path);
 
     wcp.width  = 300;
     wcp.height = 300;
@@ -242,6 +244,7 @@ int main(int argc, char* argv[])
     REL(css_path);     // REL 6
     REL(html_path);    // REL 7
     REL(scr_path);     // REL 8
+    REL(img_path);
 
 #ifdef MT_MEMORY_DEBUG
     mt_memory_stats();

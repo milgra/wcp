@@ -167,9 +167,6 @@ void ku_wayland_delete_layer();
 void ku_wayland_hide_window(struct wl_window* info);
 void ku_wayland_show_window(struct wl_window* info);
 
-void ku_wayland_hide_layer(struct wl_window* info);
-void ku_wayland_show_layer(struct wl_window* info);
-
 void ku_wayland_exit();
 void ku_wayland_toggle_fullscreen();
 void ku_wayland_set_time_event_delay(int ms);
@@ -435,7 +432,7 @@ static const struct wl_callback_listener wl_surface_frame_listener = {
 
 static void ku_wayland_layer_surface_configure(void* data, struct zwlr_layer_surface_v1* surface, uint32_t serial, uint32_t width, uint32_t height)
 {
-    mt_log_debug("layer surface configure serial %u width %i height %i", serial, width, height);
+    /* mt_log_debug("layer surface configure serial %u width %i height %i", serial, width, height); */
 
     zwlr_layer_surface_v1_ack_configure(surface, serial);
 
@@ -815,7 +812,7 @@ void ku_wayland_delete_window(struct wl_window* info)
     }
 }
 
-void ku_wayland_hide_layer(struct wl_window* info)
+void ku_wayland_hide_window(struct wl_window* info)
 {
     if (info->hidden == 0)
     {
@@ -827,60 +824,66 @@ void ku_wayland_hide_layer(struct wl_window* info)
 	    info->frame_cb = NULL;
 	}
 
-	zwlr_layer_surface_v1_destroy(info->layer_surface);
-	wl_surface_destroy(info->surface);
+	if (info->type == WL_WINDOW_LAYER)
+	{
+	    zwlr_layer_surface_v1_destroy(info->layer_surface);
+	    wl_surface_destroy(info->surface);
 
-	info->surface       = NULL;
-	info->layer_surface = NULL;
+	    info->surface       = NULL;
+	    info->layer_surface = NULL;
+	}
     }
 }
 
-void ku_wayland_show_layer(struct wl_window* info)
+void ku_wayland_show_window(struct wl_window* info)
 {
     if (info->hidden == 1)
     {
 	info->surface = wl_compositor_create_surface(wlc.compositor);
 
-	info->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-	    wlc.layer_shell,
-	    info->surface,
-	    info->monitor->wl_output,
-	    ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
-	    "wcp");
-
-	zwlr_layer_surface_v1_set_size(
-	    info->layer_surface,
-	    info->new_width,
-	    info->new_height);
-
-	uint  af     = 0;
-	char* anchor = info->anchor;
-	while (*anchor != '\0')
+	if (info->type == WL_WINDOW_LAYER)
 	{
-	    if (*anchor == 'l') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
-	    if (*anchor == 'r') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
-	    if (*anchor == 't') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
-	    if (*anchor == 'b') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
-	    anchor++;
+	    info->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
+		wlc.layer_shell,
+		info->surface,
+		info->monitor->wl_output,
+		ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
+		"wcp");
+
+	    zwlr_layer_surface_v1_set_size(
+		info->layer_surface,
+		info->new_width,
+		info->new_height);
+
+	    uint  af     = 0;
+	    char* anchor = info->anchor;
+	    while (*anchor != '\0')
+	    {
+		if (*anchor == 'l') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
+		if (*anchor == 'r') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+		if (*anchor == 't') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+		if (*anchor == 'b') af |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+		anchor++;
+	    }
+
+	    zwlr_layer_surface_v1_set_anchor(
+		info->layer_surface,
+		af);
+
+	    zwlr_layer_surface_v1_set_margin(
+		info->layer_surface,
+		info->margin,
+		info->margin,
+		info->margin,
+		info->margin);
+
+	    zwlr_layer_surface_v1_add_listener(info->layer_surface, &layer_surface_listener, info);
+
+	    wl_surface_commit(info->surface);
+
+	    info->frame_cb = wl_surface_frame(info->surface);
+	    wl_callback_add_listener(info->frame_cb, &wl_surface_frame_listener, info);
 	}
-
-	zwlr_layer_surface_v1_set_anchor(
-	    info->layer_surface,
-	    af);
-
-	zwlr_layer_surface_v1_set_margin(
-	    info->layer_surface,
-	    info->margin,
-	    info->margin,
-	    info->margin,
-	    info->margin);
-
-	zwlr_layer_surface_v1_add_listener(info->layer_surface, &layer_surface_listener, info);
-
-	wl_surface_commit(info->surface);
-
-	info->frame_cb = wl_surface_frame(info->surface);
-	wl_callback_add_listener(info->frame_cb, &wl_surface_frame_listener, info);
     }
 }
 
@@ -900,7 +903,7 @@ struct wl_window* ku_wayland_create_generic_layer(struct monitor_info* monitor, 
 
     info->type = WL_WINDOW_LAYER;
 
-    ku_wayland_show_layer(info);
+    ku_wayland_show_window(info);
 
     return info;
 }
@@ -1683,7 +1686,6 @@ void ku_wayland_init(
 
 void ku_wayland_exit()
 {
-    printf("EXIT!!!\n");
     wlc.exit_flag = 1;
     wl_display_flush(wlc.display);
 }

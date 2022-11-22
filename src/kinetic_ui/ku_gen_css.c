@@ -4,7 +4,7 @@
 #include "ku_view.c"
 #include "mt_vector.c"
 
-void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* respath, float scale);
+void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath, float scale);
 
 #endif
 
@@ -14,7 +14,7 @@ void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* respath, float sc
 #include "mt_log.c"
 #include <limits.h>
 
-void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* respath, float scale)
+void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* imgpath, float scale)
 {
     mt_vector_t* keys = VNEW(); // REL 0
     mt_map_keys(style, keys);
@@ -35,7 +35,8 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* respath, flo
 	    {
 		char* url = CAL(sizeof(char) * strlen(val), NULL, mt_string_describe); // REL 0
 		memcpy(url, val + 5, strlen(val) - 7);
-		char* imagepath              = mt_string_new_format(100, "%s/img/%s", respath, url);
+		char* imagepath = mt_string_new_format(100, "%s/%s", imgpath, url);
+
 		view->style.background_image = imagepath;
 		REL(url); // REL 0
 	    }
@@ -259,7 +260,7 @@ void ku_gen_css_apply_style(ku_view_t* view, mt_map_t* style, char* respath, flo
     REL(keys);
 }
 
-void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* respath, float scale)
+void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* imgpath, float scale)
 {
     mt_map_t* styles = ku_css_new(csspath);
     mt_map_t* style;
@@ -275,7 +276,7 @@ void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* respath, float sc
 	style = MGET(styles, cssid);
 	if (style)
 	{
-	    ku_gen_css_apply_style(view, style, respath, scale);
+	    ku_gen_css_apply_style(view, style, imgpath, scale);
 	}
 
 	if (view->class)
@@ -295,7 +296,7 @@ void ku_gen_css_apply(mt_vector_t* views, char* csspath, char* respath, float sc
 		// mt_log_debug("applying class %s to %s", cls, view->id);
 		if (style)
 		{
-		    ku_gen_css_apply_style(view, style, respath, scale);
+		    ku_gen_css_apply_style(view, style, imgpath, scale);
 		}
 	    } while ((token = strtok(NULL, " ")));
 	}

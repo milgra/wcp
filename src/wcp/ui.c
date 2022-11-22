@@ -1,9 +1,10 @@
 #ifndef ui_h
 #define ui_h
 
+#include "ku_connector_wayland.c"
 #include "ku_window.c"
 
-void ui_init(int width, int height, float scale, ku_window_t* window);
+void ui_init(int width, int height, float scale, ku_window_t* window, struct wl_window* wlwindow);
 void ui_destroy();
 void ui_load_values();
 
@@ -13,7 +14,6 @@ void ui_load_values();
 
 #include "config.c"
 #include "ku_bitmap.c"
-#include "ku_connector_wayland.c"
 #include "ku_draw.c"
 #include "ku_gen_css.c"
 #include "ku_gen_html.c"
@@ -41,13 +41,14 @@ void ui_load_values();
 
 struct _ui_t
 {
-    ku_view_t*      view_base;
-    mt_vector_t*    view_list;
-    char*           command;
-    pthread_t       thread;
-    ku_window_t*    window;
-    pthread_cond_t  comm_cond;
-    pthread_mutex_t comm_mutex;
+    struct wl_window* wlwindow;
+    ku_view_t*        view_base;
+    mt_vector_t*      view_list;
+    char*             command;
+    pthread_t         thread;
+    ku_window_t*      window;
+    pthread_cond_t    comm_cond;
+    pthread_mutex_t   comm_mutex;
 } ui;
 
 int ui_execute_command(char* command, char** result)
@@ -102,14 +103,12 @@ void ui_on_button_event(vh_button_event_t event)
 {
     if (!ui.command)
     {
-	char* script  = mt_path_new_append(config_get("res_path"), "script/");
-	char* command = mt_string_new_format(200, "sh %s%s 1", script, event.view->script);
+	char* command = mt_string_new_format(200, "sh %s/%s 1", config_get("scr_path"), event.view->script);
 	ui.command    = command;
-	REL(script);
 	pthread_cond_signal(&ui.comm_cond);
     }
 
-    /* ku_wayland_hide_window(ui.window); */
+    ku_wayland_hide_window(ui.wlwindow);
 }
 
 void ui_on_slider_event(vh_slider_event_t event)
@@ -118,10 +117,8 @@ void ui_on_slider_event(vh_slider_event_t event)
 
     if (!ui.command)
     {
-	char* script  = mt_path_new_append(config_get("res_path"), "script/");
-	char* command = mt_string_new_format(200, "sh %s%s %i", script, event.view->script, ratio);
+	char* command = mt_string_new_format(200, "sh %s/%s %i", config_get("scr_path"), event.view->script, ratio);
 	ui.command    = command;
-	REL(script);
 	pthread_cond_signal(&ui.comm_cond);
     }
 }
@@ -134,8 +131,7 @@ void ui_load_values()
 
 	if (view->script)
 	{
-	    char* script  = mt_path_new_append(config_get("res_path"), "script/");
-	    char* command = mt_string_new_format(200, "sh %s%s", script, view->script);
+	    char* command = mt_string_new_format(200, "sh %s/%s", config_get("scr_path"), view->script);
 	    char* result  = mt_string_new_cstring("");
 	    ui_execute_command(command, &result);
 
@@ -148,18 +144,18 @@ void ui_load_values()
 		float ratio = (float) atoi(result) / 100.0;
 		vh_slider_set(view, ratio);
 	    }
-	    REL(script);
 	    REL(result);
 	    REL(command);
 	}
     }
 }
 
-void ui_init(int width, int height, float scale, ku_window_t* window)
+void ui_init(int width, int height, float scale, ku_window_t* window, struct wl_window* wlwindow)
 {
     ku_text_init();
 
     ui.window    = window;
+    ui.wlwindow  = wlwindow;
     ui.view_list = VNEW();
 
     pthread_cond_init(&ui.comm_cond, NULL);
@@ -170,7 +166,7 @@ void ui_init(int width, int height, float scale, ku_window_t* window)
     /* generate views from descriptors */
 
     ku_gen_html_parse(config_get("html_path"), ui.view_list);
-    ku_gen_css_apply(ui.view_list, config_get("css_path"), config_get("res_path"), 1.0);
+    ku_gen_css_apply(ui.view_list, config_get("css_path"), config_get("img_path"), 1.0);
     ku_gen_type_apply(ui.view_list, ui_on_button_event, ui_on_slider_event);
 
     ui.view_base = mt_vector_head(ui.view_list);
