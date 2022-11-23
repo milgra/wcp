@@ -90,7 +90,6 @@ wcp_inc = include_directories(
 	'/usr/include',
 	'/usr/include/GLES2',
 	'/usr/include/EGL',
-	'/usr/include/mupdf',
 	'/usr/include/freetype2',
 	'src/mt_math',
 	'src/mt_core',
