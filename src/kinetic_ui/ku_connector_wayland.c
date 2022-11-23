@@ -506,7 +506,8 @@ static const struct xdg_toplevel_listener xdg_toplevel_listener = {
     .configure        = xdg_toplevel_configure,
     .close            = xdg_toplevel_close,
     .configure_bounds = xdg_toplevel_configure_bounds,
-    .wm_capabilities  = xdg_toplevel_wm_capabilities};
+    /* .wm_capabilities  = xdg_toplevel_wm_capabilities */
+};
 
 /* xdg surface events */
 
