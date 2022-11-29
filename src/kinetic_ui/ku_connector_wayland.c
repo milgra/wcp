@@ -438,7 +438,7 @@ static const struct wl_callback_listener wl_surface_frame_listener = {
 
 static void ku_wayland_layer_surface_configure(void* data, struct zwlr_layer_surface_v1* surface, uint32_t serial, uint32_t width, uint32_t height)
 {
-    mt_log_debug("layer surface configure serial %u width %i height %i", serial, width, height);
+    /* mt_log_debug("layer surface configure serial %u width %i height %i", serial, width, height); */
 
     zwlr_layer_surface_v1_ack_configure(surface, serial);
 
@@ -1376,17 +1376,17 @@ static void ku_wayland_wl_output_handle_geometry(
 {
     struct monitor_info* monitor = data;
 
-    mt_log_debug(
-	"wl output handle geometry x %i y %i width_mm %i height_mm %i subpixel %i make %s model %s transform %i for monitor %i",
-	x,
-	y,
-	width_mm,
-	height_mm,
-	subpixel,
-	make,
-	model,
-	transform,
-	monitor->index);
+    /* mt_log_debug( */
+    /* 	"wl output handle geometry x %i y %i width_mm %i height_mm %i subpixel %i make %s model %s transform %i for monitor %i", */
+    /* 	x, */
+    /* 	y, */
+    /* 	width_mm, */
+    /* 	height_mm, */
+    /* 	subpixel, */
+    /* 	make, */
+    /* 	model, */
+    /* 	transform, */
+    /* 	monitor->index); */
 
     monitor->subpixel = subpixel;
 }
@@ -1401,12 +1401,12 @@ static void ku_wayland_wl_output_handle_mode(
 {
     struct monitor_info* monitor = data;
 
-    mt_log_debug(
-	"wl output handle mode flags %u width %i height %i for monitor %i",
-	flags,
-	width,
-	height,
-	monitor->index);
+    /* mt_log_debug( */
+    /* 	"wl output handle mode flags %u width %i height %i for monitor %i", */
+    /* 	flags, */
+    /* 	width, */
+    /* 	height, */
+    /* 	monitor->index); */
 
     monitor->physical_width  = width;
     monitor->physical_height = height;
@@ -1423,7 +1423,7 @@ static void ku_wayland_wl_output_handle_scale(void* data, struct wl_output* wl_o
 {
     struct monitor_info* monitor = data;
 
-    mt_log_debug("wl output handle scale %i for monitor %i", factor, monitor->index);
+    /* mt_log_debug("wl output handle scale %i for monitor %i", factor, monitor->index); */
 
     monitor->scale = factor;
 }

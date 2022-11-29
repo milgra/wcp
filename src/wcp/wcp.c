@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
     wcp.margin = 0;
 
     if (anc_par) wcp.anchor = anc_par;
-    else wcp.anchor = "";
+    else wcp.anchor = STRNC("");
 
     if (frm_par != NULL)
     {
