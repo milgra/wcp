@@ -1,7 +1,7 @@
 project(
   'wcp',
   'c',
-  version: '0.61b',
+  version: '0.7b',
   license: 'MIT',
   default_options: ['c_std=gnu99']
 )
@@ -11,9 +11,6 @@ cc = meson.get_compiler('c')
 png = cc.find_library('png',static:false)
 freetype = cc.find_library('freetype',static:false)
 math = cc.find_library('m',static:false)
-z = cc.find_library('z',static:false)
-bz2 = cc.find_library('bz2',static:false)
-rt = cc.find_library('rt',static:false)
 gl = cc.find_library('GL',static:false)
 glew = cc.find_library('GLEW',static:false)
 wegl = cc.find_library('wayland-egl',static:false)
@@ -59,21 +56,17 @@ foreach p : protocols
 endforeach
 
 
-wcp_dependencies = [
-		  wayland_client,
-		  wayland_cursor,
-		  png,
-		  rt,
-		  freetype,
-		  math,
-		  gl,
-		  glew,
-		  pthread,
-		  z,
-		  bz2,
-		  xkbcommon,
-		  egl,
-		  wegl]
+wcp_dependencies = [wayland_client,
+		    wayland_cursor,
+		    png,
+		    freetype,
+		    math,
+		    gl,
+		    glew,
+		    egl,
+		    wegl,
+		    pthread,
+		    xkbcommon]
 
 wcp_version = '"@0@"'.format(meson.project_version())
 pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'wcp'
@@ -107,26 +100,26 @@ com_sources = ['src/wcp/ui.c',
 
 	       'src/mt_core_ext/mt_bitmap_ext.c',
 	       'src/mt_core_ext/mt_string_ext.c',
-	       'src/mt_core_ext/mt_map_ext.c',
+#	       'src/mt_core_ext/mt_map_ext.c',
 
-	       'src/mt_core/mt_channel.c',
+#	       'src/mt_core/mt_channel.c',
 	       'src/mt_core/mt_string.c',
 	       'src/mt_core/mt_path.c',
 	       'src/mt_core/mt_log.c',
 	       'src/mt_core/mt_map.c',
 	       'src/mt_core/mt_memory.c',
-	       'src/mt_core/mt_number.c',
+#	       'src/mt_core/mt_number.c',
 	       'src/mt_core/mt_time.c',
 	       'src/mt_core/mt_vector.c',
 	       'src/mt_core/mt_wrapper.c',
 
-	       'src/mt_math/mt_matrix_3d.c',
+#	       'src/mt_math/mt_matrix_3d.c',
 	       'src/mt_math/mt_matrix_4d.c',
-	       'src/mt_math/mt_vector_2d.c',
-	       'src/mt_math/mt_vector_3d.c',
-	       'src/mt_math/mt_vector_4d.c',
-	       'src/mt_math/mt_math_2d.c',
-	       'src/mt_math/mt_math_3d.c',
+#	       'src/mt_math/mt_vector_2d.c',
+#	       'src/mt_math/mt_vector_3d.c',
+#	       'src/mt_math/mt_vector_4d.c',
+#	       'src/mt_math/mt_math_2d.c',
+#	       'src/mt_math/mt_math_3d.c',
 
 	       'src/kinetic_ui/ku_event.c',
 	       'src/kinetic_ui/ku_html.c',
@@ -135,26 +128,26 @@ com_sources = ['src/wcp/ui.c',
 	       'src/kinetic_ui/ku_rect.c',
 	       'src/kinetic_ui/ku_bitmap.c',
 	       'src/kinetic_ui/texture/tg_css.c',
-	       'src/kinetic_ui/texture/tg_knob.c',
+#	       'src/kinetic_ui/texture/tg_knob.c',
 	       'src/kinetic_ui/texture/tg_text.c',
-	       'src/kinetic_ui/texture/tg_scaledimg.c',
+#	       'src/kinetic_ui/texture/tg_scaledimg.c',
 	       'src/kinetic_ui/handler/vh_anim.c',
 	       'src/kinetic_ui/handler/vh_button.c',
 	       'src/kinetic_ui/handler/vh_drag.c',
 	       'src/kinetic_ui/handler/vh_key.c',
-	       'src/kinetic_ui/handler/vh_knob.c',
-	       'src/kinetic_ui/handler/vh_roll.c',
+#	       'src/kinetic_ui/handler/vh_knob.c',
+#	       'src/kinetic_ui/handler/vh_roll.c',
 	       'src/kinetic_ui/handler/vh_slider.c',
 	       'src/kinetic_ui/handler/vh_textinput.c',
 	       'src/kinetic_ui/handler/vh_touch.c',
-	       'src/kinetic_ui/handler/vh_cv_body.c',
-	       'src/kinetic_ui/handler/vh_cv_scrl.c',
-	       'src/kinetic_ui/handler/vh_cv_evnt.c',
-	       'src/kinetic_ui/handler/vh_tbl_body.c',
-	       'src/kinetic_ui/handler/vh_tbl_evnt.c',
-	       'src/kinetic_ui/handler/vh_tbl_scrl.c',
-	       'src/kinetic_ui/handler/vh_tbl_head.c',
-	       'src/kinetic_ui/handler/vh_table.c',
+#	       'src/kinetic_ui/handler/vh_cv_body.c',
+#	       'src/kinetic_ui/handler/vh_cv_scrl.c',
+#	       'src/kinetic_ui/handler/vh_cv_evnt.c',
+#	       'src/kinetic_ui/handler/vh_tbl_body.c',
+#	       'src/kinetic_ui/handler/vh_tbl_evnt.c',
+#	       'src/kinetic_ui/handler/vh_tbl_scrl.c',
+#	       'src/kinetic_ui/handler/vh_tbl_head.c',
+#	       'src/kinetic_ui/handler/vh_table.c',
 	       'src/kinetic_ui/ku_view.c',
 	       'src/kinetic_ui/egl/ku_gl_atlas.c',
 	       'src/kinetic_ui/egl/ku_gl_floatbuffer.c',
