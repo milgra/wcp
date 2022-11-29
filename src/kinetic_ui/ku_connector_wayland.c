@@ -460,7 +460,8 @@ static void ku_wayland_layer_surface_configure(void* data, struct zwlr_layer_sur
 
 	(*wlc.update)(event);
     }
-    else if (info->hidden)
+
+    if (info->hidden == 1 && info->buffer)
     {
 	info->hidden = 0; // WHY?
 	wl_surface_attach(info->surface, info->buffer, 0, 0);
@@ -849,7 +850,6 @@ void ku_wayland_show_window(wl_window_t* info)
 {
     if (info->hidden == 1)
     {
-	info->hidden  = 0;
 	info->surface = wl_compositor_create_surface(wlc.compositor);
 
 	if (info->type == WL_WINDOW_LAYER)
