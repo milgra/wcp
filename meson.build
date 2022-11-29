@@ -104,7 +104,6 @@ wcp_inc = include_directories(
 com_sources = ['src/wcp/ui.c',
 	       'src/wcp/config.c',
 	       'src/wcp/kvlist.c',
-	       'src/wcp/wcp.c',
 
 	       'src/mt_core_ext/mt_bitmap_ext.c',
 	       'src/mt_core_ext/mt_string_ext.c',
@@ -201,15 +200,30 @@ install_data('res/script/suspend.sh', install_dir : pkg_datadir / 'script' )
 install_data('res/script/volume.sh', install_dir : pkg_datadir / 'script' )
 install_data('res/script/wifi-label.sh', install_dir : pkg_datadir / 'script' )
 
+wcp_sources = [com_sources, 'src/wcp/wcp.c']
 
 executable(
   'wcp',
-  com_sources,
+  wcp_sources,
   include_directories: [wcp_inc],
   dependencies: wcp_dependencies,
   install: true,
 )
 
-e = executable('maintest', 'src/tests/test.c')
+draw_sources = [com_sources, 'src/wcp/draw.c']
+
+executable(
+  'draw',
+  draw_sources,
+  include_directories: [wcp_inc],
+  dependencies: wcp_dependencies,
+  install: false,
+)
+
+e = executable('maintest', 'src/tests/test_kvlist.c')
 
 test('MAIN TEST', e)
+
+scripttests = find_program('tst/runtests.sh')
+
+test('SCRIPTED TESTS', scripttests, timeout: 0, workdir : meson.current_source_dir(), args : [meson.current_build_dir(),meson.current_source_dir()])
