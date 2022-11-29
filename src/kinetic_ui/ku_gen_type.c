@@ -26,11 +26,11 @@ void ku_gen_type_apply(mt_vector_t* views, void (*button_event)(vh_button_event_
 	    tg_text_add(view);
 	    tg_text_set1(view, view->text);
 	}
-	else if (view->style.background_color > 0)
+	else if (view->style.background_color > 0 || view->style.border_color > 0)
 	{
 	    tg_css_add(view);
 	}
-	else if (view->style.background_image)
+	else if (strlen(view->style.background_image) > 0)
 	{
 	    tg_css_add(view);
 	}

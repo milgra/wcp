@@ -74,6 +74,10 @@ typedef struct _ku_event_t
 
     char text[8];
 
+    /* window */
+
+    void* window;
+
 } ku_event_t;
 
 void       ku_event_write(FILE* file, ku_event_t ev);

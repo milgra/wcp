@@ -4,7 +4,7 @@
 #include "ku_connector_wayland.c"
 #include "ku_window.c"
 
-void ui_init(int width, int height, float scale, ku_window_t* window, struct wl_window* wlwindow);
+void ui_init(int width, int height, float scale, ku_window_t* window, wl_window_t* wlwindow);
 void ui_destroy();
 void ui_load_values();
 
@@ -41,14 +41,14 @@ void ui_load_values();
 
 struct _ui_t
 {
-    struct wl_window* wlwindow;
-    ku_view_t*        view_base;
-    mt_vector_t*      view_list;
-    char*             command;
-    pthread_t         thread;
-    ku_window_t*      window;
-    pthread_cond_t    comm_cond;
-    pthread_mutex_t   comm_mutex;
+    wl_window_t*    wlwindow;
+    ku_view_t*      view_base;
+    mt_vector_t*    view_list;
+    char*           command;
+    pthread_t       thread;
+    ku_window_t*    window;
+    pthread_cond_t  comm_cond;
+    pthread_mutex_t comm_mutex;
 } ui;
 
 int ui_execute_command(char* command, char** result)
@@ -150,7 +150,7 @@ void ui_load_values()
     }
 }
 
-void ui_init(int width, int height, float scale, ku_window_t* window, struct wl_window* wlwindow)
+void ui_init(int width, int height, float scale, ku_window_t* window, wl_window_t* wlwindow)
 {
     ku_text_init();
 
@@ -166,7 +166,7 @@ void ui_init(int width, int height, float scale, ku_window_t* window, struct wl_
     /* generate views from descriptors */
 
     ku_gen_html_parse(config_get("html_path"), ui.view_list);
-    ku_gen_css_apply(ui.view_list, config_get("css_path"), config_get("img_path"), 1.0);
+    ku_gen_css_apply(ui.view_list, config_get("css_path"), config_get("img_path"));
     ku_gen_type_apply(ui.view_list, ui_on_button_event, ui_on_slider_event);
 
     ui.view_base = mt_vector_head(ui.view_list);

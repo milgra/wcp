@@ -22,8 +22,8 @@ textstyle_t ku_gen_textstyle_parse(ku_view_t* view)
 
     style.size = view->style.font_size > 0 ? view->style.font_size : 15;
 
-    style.align = view->style.text_align;
-    /* style.valign = */
+    style.align  = view->style.text_align;
+    style.valign = view->style.vertical_align;
     /* style.autosize = */
     style.multiline   = view->style.word_wrap == 1;
     style.line_height = view->style.line_height;

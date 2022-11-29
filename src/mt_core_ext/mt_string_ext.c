@@ -12,6 +12,7 @@ char*        mt_string_new_readablec(uint32_t length);
 char*        mt_string_new_alphanumeric(uint32_t length);
 void         mt_string_tolower(char* str);
 mt_vector_t* mt_string_split(char* str, char* del);
+char*        mt_string_unescape(char* str);
 
 #endif
 
@@ -237,6 +238,33 @@ mt_vector_t* mt_string_split(char* str, char* del)
 
     REL(copy);
 
+    return result;
+}
+
+char* mt_string_unescape(char* str)
+{
+    size_t length = strlen(str);
+    char*  result = CAL((length + 1) * sizeof(char), NULL, mt_string_describe);
+    int    ni     = 0;
+    for (int index = 0; index < length; index++)
+    {
+	if (str[index] == '\\')
+	{
+	    if (index < length - 1)
+	    {
+		char n = str[index + 1];
+		if (n == '\\' || n == '"' || n == '\'' || n == '/' || n == '?')
+		{
+		    result[ni++] = n;
+		}
+		index += 1;
+	    }
+	}
+	else
+	{
+	    result[ni++] = str[index];
+	}
+    }
     return result;
 }
 

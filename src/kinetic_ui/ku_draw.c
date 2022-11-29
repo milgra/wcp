@@ -10,6 +10,9 @@
 void ku_draw_circle(ku_bitmap_t* bitmap, float cx, float cy, float r, float edge, uint32_t c);
 void ku_draw_arc(ku_bitmap_t* bitmap, float cx, float cy, float r, float edge, uint32_t c, float as, float ae);
 void ku_draw_rounded_rect(ku_bitmap_t* bitmap, int x, int y, int w, int h, int r, float edge, uint32_t c1, uint32_t c2);
+
+void ku_draw_border(ku_bitmap_t* bitmap, int x, int y, int w, int h, int r, float edge, uint32_t c1);
+
 void ku_draw_tile(ku_bitmap_t* bitmap);
 void ku_draw_arc_grad(ku_bitmap_t* bm, float cx, float cy, float d1, float d2, float a1, float a2, uint32_t c1, uint32_t c2);
 void ku_draw_grad_v(ku_bitmap_t* bm, int sx, int sy, int w, int h, uint32_t c1, uint32_t c2);
@@ -299,6 +302,88 @@ void ku_draw_rounded_rect(ku_bitmap_t* bitmap, int x, int y, int w, int h, int r
 
     ku_draw_rect(bitmap, x + e, y + e + r, w - 2 * e, h - 2 * e - 2 * r, c1, 0);
     ku_draw_rect(bitmap, x + e + r, y + e, w - 2 * e - 2 * r, h - 2 * e, c1, 0);
+}
+
+void ku_draw_border(ku_bitmap_t* bitmap, int x, int y, int w, int h, int r, float edge, uint32_t c1)
+{
+    float e = edge;
+
+    if (r > 0)
+    {
+	ku_draw_arc_grad(
+	    bitmap,
+	    x + e + r,
+	    y + e + r,
+	    r,
+	    r + e + 1.5,
+	    3.14,
+	    3.14 * 3 / 2.0,
+	    c1,
+	    c1); // left top
+	ku_draw_arc_grad(
+	    bitmap,
+	    x + w - e - r - 1,
+	    y + e + r,
+	    r,
+	    r + e + 1.5,
+	    3.14 * 3 / 2.0,
+	    3.14 * 2,
+	    c1,
+	    c1); // right top
+	ku_draw_arc_grad(
+	    bitmap,
+	    x + e + r,
+	    y + h - e - r - 1,
+	    r,
+	    r + e + 1.5,
+	    3.14 / 2.0,
+	    3.14,
+	    c1,
+	    c1); // left bottom
+	ku_draw_arc_grad(
+	    bitmap,
+	    x + w - e - r - 1,
+	    y + h - e - r - 1,
+	    r,
+	    r + e + 1.5,
+	    0,
+	    3.14 / 2.0,
+	    c1,
+	    c1); // right bottom
+    }
+
+    ku_draw_rect(
+	bitmap,
+	x,
+	y + e + r,
+	e,
+	h - 2 * e - 2 * r,
+	c1,
+	0); // left vertical grad
+    ku_draw_rect(
+	bitmap,
+	x + w - e,
+	y + e + r,
+	e,
+	h - 2 * e - 2 * r,
+	c1,
+	0); // right vertical grad
+    ku_draw_rect(
+	bitmap,
+	x + e + r,
+	y,
+	w - 2 * e - 2 * r,
+	e,
+	c1,
+	0); // top horizontal grad
+    ku_draw_rect(
+	bitmap,
+	x + e + r,
+	y + h - e,
+	w - 2 * e - 2 * r,
+	e,
+	c1,
+	0); // bottom horizontal grad
 }
 
 void ku_draw_rect(ku_bitmap_t* bm, int sx, int sy, int w, int h, uint32_t color,
