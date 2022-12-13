@@ -4,7 +4,9 @@ Script-driven control panel/system menu for wayland based window managers.
 
 Wayland Control Panel was made for SwayOS (https://swayos.github.io)
 
-![alt text](screenshot.png)
+[![alt text](screenshot.png)](https://www.youtube.com/watch?v=36wwQSg9PSk)
+
+Watch the introduction/user guide [video on youtube](https://www.youtube.com/watch?v=36wwQSg9PSk)
 
 ## Features ##
 
@@ -14,8 +16,10 @@ Wayland Control Panel was made for SwayOS (https://swayos.github.io)
 
 ## Description ##
 
-Wayland control panel is an application for popup control menu, system menu or any kind of menu for UNIX-like operating systems. It can be structured via html, styled via css, button, label and slider values are coming from scripts and it can invoke scripts in case of interaction, it's totally configurable.
+Wayland control panel is an application for popup control menu, system menu or any kind of menu for UNIX-like operating systems.
 You can trigger it's appereance with a shortcut or with a button in the status bar.
+It can be structured via html, styled via css.
+Button, label and slider values are coming from scripts and it can invoke scripts in case of interaction, it's totally configurable.
 By default it looks for config files under ~/.config/wcp/ and falls back to /usr/local/share/wcp.
 
 ## Installation
