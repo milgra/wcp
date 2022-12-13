@@ -26,17 +26,18 @@ struct
     int   height;
     int   margin;
     char* anchor;
+
+    int                  shown;
+    struct monitor_info* monitor;
 } wcp = {0};
 
 void init(wl_event_t event)
 {
-    struct monitor_info* monitor = event.monitors[0];
+    wcp.monitor = event.monitors[0];
 
-    /* wcp.wlwindow = ku_wayland_create_window("wcp", 1200, 600); */
-    wcp.wlwindow = ku_wayland_create_generic_layer(monitor, wcp.width, wcp.height, wcp.margin, wcp.anchor, 0);
-    wcp.kuwindow = ku_window_create(wcp.width * monitor->scale, wcp.height * monitor->scale, monitor->scale);
+    wcp.kuwindow = ku_window_create(wcp.width * wcp.monitor->scale, wcp.height * wcp.monitor->scale, wcp.monitor->scale);
 
-    ui_init(monitor->logical_width, monitor->logical_height, monitor->scale, wcp.kuwindow, wcp.wlwindow);
+    ui_init(wcp.monitor->logical_width, wcp.monitor->logical_height, wcp.monitor->scale, wcp.kuwindow, wcp.wlwindow);
 }
 
 /* window update */
@@ -45,29 +46,51 @@ void update(ku_event_t ev)
 {
     if (ev.type == KU_EVENT_STDIN)
     {
-	if (ev.text[0] == '0' && wcp.wlwindow->hidden == 0) ku_wayland_hide_window(wcp.wlwindow);
-	else if (ev.text[0] == '1' && wcp.wlwindow->hidden == 1)
+	if (ev.text[0] == '0' && wcp.wlwindow != NULL)
+	{
+	    ku_wayland_delete_window(wcp.wlwindow);
+	    wcp.wlwindow = NULL;
+	    wcp.shown    = 0;
+	}
+	else if (ev.text[0] == '1' && wcp.wlwindow == NULL)
 	{
 	    // TODO figure out something to force full dirty rect update after show
 	    wcp.kuwindow->root->rearrange = 1;
+	    /* wcp.wlwindow = ku_wayland_create_window("wcp", 1200, 600); */
+	    wcp.wlwindow = ku_wayland_create_generic_layer(wcp.monitor, wcp.width, wcp.height, wcp.margin, wcp.anchor);
 	    ku_wayland_show_window(wcp.wlwindow);
-	    ui_load_values();
+
+	    printf("SHOW WINDOW\n");
 	}
 	else if (ev.text[0] == '2')
 	{
-	    if (wcp.wlwindow->hidden == 0) ku_wayland_hide_window(wcp.wlwindow);
-	    else if (wcp.wlwindow->hidden == 1)
+	    if (wcp.wlwindow != NULL)
 	    {
+		ku_wayland_delete_window(wcp.wlwindow);
+		wcp.wlwindow = NULL;
+		wcp.shown    = 0;
+	    }
+	    else if (wcp.wlwindow == NULL)
+	    {
+		// TODO figure out something to force full dirty rect update after show
+		wcp.kuwindow->root->rearrange = 1;
+		/* wcp.wlwindow = ku_wayland_create_window("wcp", 1200, 600); */
+		wcp.wlwindow = ku_wayland_create_generic_layer(wcp.monitor, wcp.width, wcp.height, wcp.margin, wcp.anchor);
 		ku_wayland_show_window(wcp.wlwindow);
-		ui_load_values();
 	    }
 	}
 	else if (ev.text[0] == '3') ku_wayland_exit();
     }
 
+    if (ev.type == KU_EVENT_WINDOW_SHOWN)
+    {
+	ui_load_values();
+	wcp.shown = 1;
+    }
+
     ku_window_event(wcp.kuwindow, ev);
 
-    if (wcp.wlwindow->frame_cb == NULL)
+    if (wcp.shown && wcp.wlwindow->frame_cb == NULL)
     {
 	ku_rect_t dirty = ku_window_update(wcp.kuwindow, 0);
 
@@ -77,7 +100,7 @@ void update(ku_event_t ev)
 
 	    /* mt_log_debug("drt %i %i %i %i", (int) dirty.x, (int) dirty.y, (int) dirty.w, (int) dirty.h); */
 	    /* mt_log_debug("drt prev %i %i %i %i", (int) wcp.dirtyrect.x, (int) wcp.dirtyrect.y, (int) wcp.dirtyrect.w, (int) wcp.dirtyrect.h); */
-	    /* mt_log_debug("sum aftr %i %i %i %i", (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h); */
+	    mt_log_debug("sum aftr %i %i %i %i", (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h);
 
 	    ku_renderer_software_render(wcp.kuwindow->views, &wcp.wlwindow->bitmap, sum);
 
@@ -92,7 +115,7 @@ void update(ku_event_t ev)
 
 void destroy()
 {
-    ku_wayland_delete_window(wcp.wlwindow);
+    if (wcp.wlwindow) ku_wayland_delete_window(wcp.wlwindow);
     ui_destroy();
 
     REL(wcp.anchor);

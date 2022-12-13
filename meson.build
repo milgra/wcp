@@ -1,7 +1,7 @@
 project(
   'wcp',
   'c',
-  version: '0.7b',
+  version: '0.71b',
   license: 'MIT',
   default_options: ['c_std=gnu99']
 )
@@ -97,8 +97,8 @@ wcp_inc = include_directories(
 com_sources = ['src/wcp/ui.c',
 	       'src/wcp/config.c',
 	       'src/wcp/kvlist.c',
-
-	       'src/mt_core_ext/mt_bitmap_ext.c',
+	       'src/wcp/ku_bitmap_ext.c',
+	       
 	       'src/mt_core_ext/mt_string_ext.c',
 #	       'src/mt_core_ext/mt_map_ext.c',
 

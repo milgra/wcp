@@ -14,13 +14,13 @@ void ui_load_values();
 
 #include "config.c"
 #include "ku_bitmap.c"
+#include "ku_bitmap_ext.c"
 #include "ku_draw.c"
 #include "ku_gen_css.c"
 #include "ku_gen_html.c"
 #include "ku_gen_type.c"
 #include "ku_text.c"
 #include "ku_view.c"
-#include "mt_bitmap_ext.c"
 #include "mt_log.c"
 #include "mt_map_ext.c"
 #include "mt_number.c"
@@ -108,7 +108,7 @@ void ui_on_button_event(vh_button_event_t event)
 	pthread_cond_signal(&ui.comm_cond);
     }
 
-    ku_wayland_hide_window(ui.wlwindow);
+    ku_wayland_delete_window(ui.wlwindow);
 }
 
 void ui_on_slider_event(vh_slider_event_t event)
