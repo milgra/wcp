@@ -108,7 +108,7 @@ void ui_on_button_event(vh_button_event_t event)
 	pthread_cond_signal(&ui.comm_cond);
     }
 
-    ku_wayland_delete_window(ui.wlwindow);
+    /* ku_wayland_delete_window(ui.wlwindow); */
 }
 
 void ui_on_slider_event(vh_slider_event_t event)
