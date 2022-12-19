@@ -26,15 +26,24 @@ By default it looks for config files under ~/.config/wcp/ and falls back to /usr
 
 ### Compiling from source
 
-Install dependencies:
+Install the needed dependencies and libraries:
 
-- wayland
-- freetype2 \*
-- wayland-protocols \*
-- meson \*
-- png \*
+```
+libpng,libfreetype,
+libgl,libglew,libegl,libwegl,wayland-client,wayland-protocols,
+fonts-terminus
+````
 
-\* _compile-time dependecy_
+On debian based systems ( over version 12 ):
+```
+sudo apg-get install meson ninja-build pkg-config cmake libpng-dev libfreetype-dev libgl-dev libgles2-mesa-dev libmesa1-dev libglew-dev libegl-dev libwayland-dev wayland-protocols fonts-terminus
+
+```
+
+On arch based systems :
+```
+sudo pacman -Qs meson ninja-build pkg-config cmake libpng freetype2
+```
 
 Run these commands:
 
