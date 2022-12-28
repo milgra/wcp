@@ -103,7 +103,7 @@ void ui_on_button_event(vh_button_event_t event)
 {
     if (!ui.command)
     {
-	char* command = mt_string_new_format(200, "sh %s/%s 1", config_get("scr_path"), event.view->script);
+	char* command = mt_string_new_format(200, "bash %s/%s 1", config_get("scr_path"), event.view->script);
 	ui.command    = command;
 	pthread_cond_signal(&ui.comm_cond);
     }
@@ -117,7 +117,7 @@ void ui_on_slider_event(vh_slider_event_t event)
 
     if (!ui.command)
     {
-	char* command = mt_string_new_format(200, "sh %s/%s %i", config_get("scr_path"), event.view->script, ratio);
+	char* command = mt_string_new_format(200, "bash %s/%s %i", config_get("scr_path"), event.view->script, ratio);
 	ui.command    = command;
 	pthread_cond_signal(&ui.comm_cond);
     }
@@ -131,7 +131,7 @@ void ui_load_values()
 
 	if (view->script)
 	{
-	    char* command = mt_string_new_format(200, "sh %s/%s", config_get("scr_path"), view->script);
+	    char* command = mt_string_new_format(200, "bash %s/%s", config_get("scr_path"), view->script);
 	    char* result  = mt_string_new_cstring("");
 	    ui_execute_command(command, &result);
 
