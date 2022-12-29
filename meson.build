@@ -8,14 +8,14 @@ project(
 
 cc = meson.get_compiler('c')
 
-png = cc.find_library('png',static:false)
-freetype = cc.find_library('freetype',static:false)
-math = cc.find_library('m',static:false)
-gl = cc.find_library('GL',static:false)
-glew = cc.find_library('GLEW',static:false)
-wegl = cc.find_library('wayland-egl',static:false)
-pthread = cc.find_library('pthread',static:false)
-egl = cc.find_library('EGL',static:false)
+gl = cc.find_library('GL')
+egl = cc.find_library('EGL')
+png = cc.find_library('png')
+wegl = cc.find_library('wayland-egl')
+math = cc.find_library('m')
+glew = cc.find_library('GLEW')
+pthread = cc.find_library('pthread')
+freetype = cc.find_library('freetype')
 
 xkbcommon = dependency('xkbcommon')
 
