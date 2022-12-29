@@ -80,10 +80,6 @@ if get_option('buildtype') == 'debug'
 endif
 
 wcp_inc = include_directories(
-	'/usr/include',
-	'/usr/include/GLES2',
-	'/usr/include/EGL',
-	'/usr/include/freetype2',
 	'src/mt_math',
 	'src/mt_core',
 	'src/kinetic_ui',
@@ -93,6 +89,23 @@ wcp_inc = include_directories(
 	'src/wcp',
 	'src/mt_core_ext')
 
+if build_machine.system() == 'freebsd'
+   wcp_inc = [
+   	   wcp_inc,
+	   include_directories( 
+   	   '/usr/local/include',
+	   '/usr/local/include/GLES2',
+	   '/usr/local/include/EGL',
+	   '/usr/local/include/freetype2')]
+else
+   wcp_inc = [
+   	   wcp_inc,
+	   include_directories( 
+   	   '/usr/include',
+	   '/usr/include/GLES2',
+	   '/usr/include/EGL',
+	   '/usr/include/freetype2')]
+endif
 
 com_sources = ['src/wcp/ui.c',
 	       'src/wcp/config.c',
