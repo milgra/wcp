@@ -97,6 +97,8 @@ if build_machine.system() == 'freebsd'
 	   '/usr/local/include/GLES2',
 	   '/usr/local/include/EGL',
 	   '/usr/local/include/freetype2')]
+   epoll = cc.find_library('epoll-shim')
+   wcp_dependencies += epoll
 else
    wcp_inc = [
    	   wcp_inc,
