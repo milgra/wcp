@@ -59,8 +59,6 @@ void update(ku_event_t ev)
 	    /* wcp.wlwindow = ku_wayland_create_window("wcp", 1200, 600); */
 	    wcp.wlwindow = ku_wayland_create_generic_layer(wcp.monitor, wcp.width, wcp.height, wcp.margin, wcp.anchor);
 	    ku_wayland_show_window(wcp.wlwindow);
-
-	    printf("SHOW WINDOW\n");
 	}
 	else if (ev.text[0] == '2')
 	{
