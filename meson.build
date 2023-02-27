@@ -1,9 +1,10 @@
 project(
   'wcp',
   'c',
-  version: '0.74b',
+  version: '0.75b',
   license: 'MIT',
-  default_options: ['c_std=gnu99']
+  default_options: ['c_std=gnu99',
+  		    'warning_level=3']
 )
 
 cc = meson.get_compiler('c')
@@ -72,6 +73,7 @@ wcp_version = '"@0@"'.format(meson.project_version())
 pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'wcp'
 add_project_arguments('-DPKG_DATADIR="' + pkg_datadir + '"',
 		      '-DWCP_VERSION=@0@'.format(wcp_version),
+		      '-Wno-unused-parameter',
 		      language: 'c')
 add_project_arguments('-Wno-unused-but-set-variable', language: 'c')
 
@@ -115,26 +117,17 @@ com_sources = ['src/wcp/ui.c',
 	       'src/wcp/ku_bitmap_ext.c',
 	       
 	       'src/mt_core_ext/mt_string_ext.c',
-#	       'src/mt_core_ext/mt_map_ext.c',
 
-#	       'src/mt_core/mt_channel.c',
 	       'src/mt_core/mt_string.c',
 	       'src/mt_core/mt_path.c',
 	       'src/mt_core/mt_log.c',
 	       'src/mt_core/mt_map.c',
 	       'src/mt_core/mt_memory.c',
-#	       'src/mt_core/mt_number.c',
 	       'src/mt_core/mt_time.c',
 	       'src/mt_core/mt_vector.c',
 	       'src/mt_core/mt_wrapper.c',
 
-#	       'src/mt_math/mt_matrix_3d.c',
 	       'src/mt_math/mt_matrix_4d.c',
-#	       'src/mt_math/mt_vector_2d.c',
-#	       'src/mt_math/mt_vector_3d.c',
-#	       'src/mt_math/mt_vector_4d.c',
-#	       'src/mt_math/mt_math_2d.c',
-#	       'src/mt_math/mt_math_3d.c',
 
 	       'src/kinetic_ui/ku_event.c',
 	       'src/kinetic_ui/ku_html.c',
@@ -143,26 +136,14 @@ com_sources = ['src/wcp/ui.c',
 	       'src/kinetic_ui/ku_rect.c',
 	       'src/kinetic_ui/ku_bitmap.c',
 	       'src/kinetic_ui/texture/tg_css.c',
-#	       'src/kinetic_ui/texture/tg_knob.c',
 	       'src/kinetic_ui/texture/tg_text.c',
-#	       'src/kinetic_ui/texture/tg_scaledimg.c',
 	       'src/kinetic_ui/handler/vh_anim.c',
 	       'src/kinetic_ui/handler/vh_button.c',
 	       'src/kinetic_ui/handler/vh_drag.c',
 	       'src/kinetic_ui/handler/vh_key.c',
-#	       'src/kinetic_ui/handler/vh_knob.c',
-#	       'src/kinetic_ui/handler/vh_roll.c',
 	       'src/kinetic_ui/handler/vh_slider.c',
 	       'src/kinetic_ui/handler/vh_textinput.c',
 	       'src/kinetic_ui/handler/vh_touch.c',
-#	       'src/kinetic_ui/handler/vh_cv_body.c',
-#	       'src/kinetic_ui/handler/vh_cv_scrl.c',
-#	       'src/kinetic_ui/handler/vh_cv_evnt.c',
-#	       'src/kinetic_ui/handler/vh_tbl_body.c',
-#	       'src/kinetic_ui/handler/vh_tbl_evnt.c',
-#	       'src/kinetic_ui/handler/vh_tbl_scrl.c',
-#	       'src/kinetic_ui/handler/vh_tbl_head.c',
-#	       'src/kinetic_ui/handler/vh_table.c',
 	       'src/kinetic_ui/ku_view.c',
 	       'src/kinetic_ui/egl/ku_gl_atlas.c',
 	       'src/kinetic_ui/egl/ku_gl_floatbuffer.c',
@@ -228,9 +209,26 @@ executable(
   install: false,
 )
 
-e = executable('maintest', 'src/tests/test_kvlist.c')
+mt_core_test = executable(
+	   'mt_core_test',
+	   ['src/mt_core/mt_log.c',
+	    'src/mt_core/mt_memory.c',
+	    'src/mt_core/mt_vector.c',
+	    'src/mt_core/mt_map.c',
+	    'src/mt_core/mt_string.c',
+	    'src/mt_core/mt_channel.c',
+	    'src/mt_core/mt_path.c',
+	    'src/mt_core_test/mt_core_test.c',
+	    'src/mt_core_test/mt_memory_test.c',
+	    'src/mt_core_test/mt_vector_test.c',
+	    'src/mt_core_test/mt_map_test.c',
+	    'src/mt_core_test/mt_string_test.c',
+	    'src/mt_core_test/mt_channel_test.c',
+	    'src/mt_core_test/mt_path_test.c'
+	    ],
+	    include_directories: ['src/mt_core'])
 
-test('MAIN TEST', e)
+test('MT_CORE_TEST', mt_core_test)
 
 scripttests = find_program('tst/runtests.sh')
 

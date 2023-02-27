@@ -51,13 +51,8 @@ int main(int argc, char* argv[])
 
     srand((unsigned int) time(NULL));
 
-    char cwd[PATH_MAX] = {"~"};
-    if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
-
-    char* wrk_path = mt_path_new_normalize(cwd, NULL); // REL 3
-
     char* res_path     = NULL;
-    char* res_path_loc = res_par ? mt_path_new_normalize(res_par, wrk_path) : mt_path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 4
+    char* res_path_loc = res_par ? mt_path_new_normalize(res_par) : mt_path_new_normalize("~/.config/wcp"); // REL 4
     char* res_path_glo = mt_string_new_cstring(PKG_DATADIR);                                                                          // REL 5
 
     DIR* dir = opendir(res_path_loc);
@@ -75,7 +70,6 @@ int main(int argc, char* argv[])
 
     // print path info to console
 
-    printf("working path  : %s\n", wrk_path);
     printf("resource path : %s\n", res_path);
     printf("css path      : %s\n", css_path);
     printf("html path     : %s\n", html_path);
@@ -87,7 +81,6 @@ int main(int argc, char* argv[])
     config_init(); // DESTROY 0
     config_set("res_path", res_path);
 
-    config_set("wrk_path", wrk_path);
     config_set("css_path", css_path);
     config_set("html_path", html_path);
     config_set("scr_path", scr_path);
@@ -116,7 +109,7 @@ int main(int argc, char* argv[])
     ku_window_t* kuwindow = ku_window_create(width * scale, height * scale, scale);
 
     ui_init(width, height, scale, kuwindow, NULL);
-    ku_rect_t dirty = ku_window_update(kuwindow, 0);
+    ku_window_update(kuwindow, 0);
 
     ku_bitmap_t* bitmap = ku_bitmap_new(width, height);
 
@@ -124,13 +117,15 @@ int main(int argc, char* argv[])
 
     bm_write(bitmap, tgt_par);
 
+    REL(bitmap);
+    
     // cleanup
 
     if (res_par) REL(res_par); // REL 0
     if (frm_par) REL(frm_par); // REL 1
     if (mrg_par) REL(mrg_par); // REL 1
+    if (tgt_par) REL(tgt_par); // REL 1
 
-    REL(wrk_path);     // REL 3
     REL(res_path_loc); // REL 4
     REL(res_path_glo); // REL 5
     REL(css_path);     // REL 6

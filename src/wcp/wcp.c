@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
 	"\n"
 	"  -h, --help                            Show help message and quit.\n"
 	"  -v, --verbose                         Increase verbosity of messages, defaults to errors and warnings only.\n"
-	"  -a, --anchor=[lrtp]                   Anchor window to window edge in directions, use rt for right top\n"
+	"  -a, --anchor=[lrtb]                   Anchor window to window edge in directions, use rt for right top\n"
 	"  -f, --frame=[width]x[height]          Initial window dimension\n"
 	"  -m, --margin=[size]                   Margin\n"
 	"  -r, --resources=[resources folder]    Resources dir for current session\n"
@@ -185,13 +185,8 @@ int main(int argc, char* argv[])
 
     srand((unsigned int) time(NULL));
 
-    char cwd[PATH_MAX] = {"~"};
-    if (getcwd(cwd, sizeof(cwd)) == NULL) printf("Cannot get working directory\n");
-
-    char* wrk_path = mt_path_new_normalize(cwd, NULL); // REL 3
-
     char* res_path     = NULL;
-    char* res_path_loc = res_par ? mt_path_new_normalize(res_par, wrk_path) : mt_path_new_normalize("~/.config/wcp", getenv("HOME")); // REL 4
+    char* res_path_loc = res_par ? mt_path_new_normalize(res_par) : mt_path_new_normalize("~/.config/wcp"); // REL 4
     char* res_path_glo = mt_string_new_cstring(PKG_DATADIR);                                                                          // REL 5
 
     DIR* dir = opendir(res_path_loc);
@@ -209,7 +204,6 @@ int main(int argc, char* argv[])
 
     // print path info to console
 
-    printf("working path  : %s\n", wrk_path);
     printf("resource path : %s\n", res_path);
     printf("css path      : %s\n", css_path);
     printf("html path     : %s\n", html_path);
@@ -226,7 +220,6 @@ int main(int argc, char* argv[])
 
     // init non-configurable defaults
 
-    config_set("wrk_path", wrk_path);
     config_set("css_path", css_path);
     config_set("html_path", html_path);
     config_set("scr_path", scr_path);
@@ -263,7 +256,6 @@ int main(int argc, char* argv[])
     if (frm_par) REL(frm_par); // REL 1
     if (mrg_par) REL(mrg_par); // REL 1
 
-    REL(wrk_path);     // REL 3
     REL(res_path_loc); // REL 4
     REL(res_path_glo); // REL 5
     REL(css_path);     // REL 6

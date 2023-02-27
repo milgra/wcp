@@ -76,14 +76,14 @@ int kvlist_write(char* libpath, mt_map_t* db)
 	mt_vector_t* vals = VNEW(); // REL 1
 	mt_map_values(db, vals);
 
-	for (int vali = 0; vali < vals->length; vali++)
+	for (size_t vali = 0; vali < vals->length; vali++)
 	{
 	    mt_map_t*    entry = vals->data[vali];
 	    mt_vector_t* keys  = VNEW(); // REL 2
 
 	    mt_map_keys(entry, keys);
 
-	    for (int keyi = 0; keyi < keys->length; keyi++)
+	    for (size_t keyi = 0; keyi < keys->length; keyi++)
 	    {
 		char* key = keys->data[keyi];
 		char* val = MGET(entry, key);

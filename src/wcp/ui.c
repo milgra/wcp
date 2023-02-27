@@ -125,7 +125,7 @@ void ui_on_slider_event(vh_slider_event_t event)
 
 void ui_load_values()
 {
-    for (int index = 0; index < ui.view_list->length; index++)
+    for (size_t index = 0; index < ui.view_list->length; index++)
     {
 	ku_view_t* view = ui.view_list->data[index];
 
