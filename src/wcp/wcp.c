@@ -98,7 +98,7 @@ void update(ku_event_t ev)
 
 	    /* mt_log_debug("drt %i %i %i %i", (int) dirty.x, (int) dirty.y, (int) dirty.w, (int) dirty.h); */
 	    /* mt_log_debug("drt prev %i %i %i %i", (int) wcp.dirtyrect.x, (int) wcp.dirtyrect.y, (int) wcp.dirtyrect.w, (int) wcp.dirtyrect.h); */
-	    mt_log_debug("sum aftr %i %i %i %i", (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h);
+	    /* mt_log_debug("sum aftr %i %i %i %i", (int) sum.x, (int) sum.y, (int) sum.w, (int) sum.h); */
 
 	    ku_renderer_software_render(wcp.kuwindow->views, &wcp.wlwindow->bitmap, sum);
 

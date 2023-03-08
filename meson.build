@@ -1,7 +1,7 @@
 project(
   'wcp',
   'c',
-  version: '0.75b',
+  version: '0.76b',
   license: 'MIT',
   default_options: ['c_std=gnu99',
   		    'warning_level=3']
@@ -9,16 +9,15 @@ project(
 
 cc = meson.get_compiler('c')
 
-gl = cc.find_library('GL')
-egl = cc.find_library('EGL')
-png = cc.find_library('png')
-wegl = cc.find_library('wayland-egl')
+egl = dependency('egl')
+png = dependency('libpng')
+glew = dependency('glew')
 math = cc.find_library('m')
-glew = cc.find_library('GLEW')
-pthread = cc.find_library('pthread')
-freetype = cc.find_library('freetype')
-
+wegl = dependency('wayland-egl')
+glesv2 = dependency('glesv2')
+freetype = dependency('freetype2')
 xkbcommon = dependency('xkbcommon')
+
 
 wayland_client      = dependency('wayland-client')
 wayland_cursor      = dependency('wayland-cursor')
@@ -62,11 +61,10 @@ wcp_dependencies = [wayland_client,
 		    png,
 		    freetype,
 		    math,
-		    gl,
+		    glesv2,
 		    glew,
 		    egl,
 		    wegl,
-		    pthread,
 		    xkbcommon]
 
 wcp_version = '"@0@"'.format(meson.project_version())
@@ -92,23 +90,8 @@ wcp_inc = include_directories(
 	'src/mt_core_ext')
 
 if build_machine.system() == 'freebsd'
-   wcp_inc = [
-   	   wcp_inc,
-	   include_directories( 
-   	   '/usr/local/include',
-	   '/usr/local/include/GLES2',
-	   '/usr/local/include/EGL',
-	   '/usr/local/include/freetype2')]
    epoll = cc.find_library('epoll-shim')
-   wcp_dependencies += epoll
-else
-   wcp_inc = [
-   	   wcp_inc,
-	   include_directories( 
-   	   '/usr/include',
-	   '/usr/include/GLES2',
-	   '/usr/include/EGL',
-	   '/usr/include/freetype2')]
+   sov_dependencies += epoll
 endif
 
 com_sources = ['src/wcp/ui.c',
