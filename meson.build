@@ -1,7 +1,7 @@
 project(
   'wcp',
   'c',
-  version: '0.76b',
+  version: '0.77b',
   license: 'MIT',
   default_options: ['c_std=gnu99',
   		    'warning_level=3']
@@ -11,7 +11,6 @@ cc = meson.get_compiler('c')
 
 egl = dependency('egl')
 png = dependency('libpng')
-glew = dependency('glew')
 math = cc.find_library('m')
 wegl = dependency('wayland-egl')
 glesv2 = dependency('glesv2')
@@ -62,7 +61,6 @@ wcp_dependencies = [wayland_client,
 		    freetype,
 		    math,
 		    glesv2,
-		    glew,
 		    egl,
 		    wegl,
 		    xkbcommon]
