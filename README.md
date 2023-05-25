@@ -137,6 +137,8 @@ GPLv3, see [LICENSE](/LICENSE).
 
 ## Roadmap ##
 
+wifi/bluetooth selector
+set default output
 dirty rect errors fix
 video on github page
 clear makepkg errors
