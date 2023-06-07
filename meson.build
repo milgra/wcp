@@ -90,8 +90,8 @@ wcp_inc = include_directories(
 if build_machine.system() == 'freebsd'
    epoll = dependency('epoll-shim')
    pthread = dependency('threads')
-   sov_dependencies += pthread
-   sov_dependencies += epoll
+   wcp_dependencies += pthread
+   wcp_dependencies += epoll
 endif
 
 com_sources = ['src/wcp/ui.c',
