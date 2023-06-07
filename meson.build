@@ -16,7 +16,7 @@ wegl = dependency('wayland-egl')
 glesv2 = dependency('glesv2')
 freetype = dependency('freetype2')
 xkbcommon = dependency('xkbcommon')
-
+epoll = dependency('epoll-shim')
 
 wayland_client      = dependency('wayland-client')
 wayland_cursor      = dependency('wayland-cursor')
@@ -63,7 +63,8 @@ wcp_dependencies = [wayland_client,
 		    glesv2,
 		    egl,
 		    wegl,
-		    xkbcommon]
+		    xkbcommon,
+		    epoll]
 
 wcp_version = '"@0@"'.format(meson.project_version())
 pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'wcp'
@@ -89,7 +90,7 @@ wcp_inc = include_directories(
 
 if build_machine.system() == 'freebsd'
    epoll = cc.find_library('epoll-shim')
-   sov_dependencies += epoll
+   sov_dependencies = epoll
 endif
 
 com_sources = ['src/wcp/ui.c',
