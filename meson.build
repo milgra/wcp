@@ -63,8 +63,7 @@ wcp_dependencies = [wayland_client,
 		    glesv2,
 		    egl,
 		    wegl,
-		    xkbcommon,
-		    epoll]
+		    xkbcommon]
 
 wcp_version = '"@0@"'.format(meson.project_version())
 pkg_datadir = join_paths(get_option('prefix'), get_option('datadir')) / 'wcp'
@@ -89,8 +88,10 @@ wcp_inc = include_directories(
 	'src/mt_core_ext')
 
 if build_machine.system() == 'freebsd'
-   epoll = cc.find_library('epoll-shim')
-   sov_dependencies = epoll
+   epoll = dependency('epoll-shim')
+   pthread = dependency('threads')
+   sov_dependencies += pthread
+   sov_dependencies += epoll
 endif
 
 com_sources = ['src/wcp/ui.c',
@@ -208,7 +209,8 @@ mt_core_test = executable(
 	    'src/mt_core_test/mt_channel_test.c',
 	    'src/mt_core_test/mt_path_test.c'
 	    ],
-	    include_directories: ['src/mt_core'])
+	    include_directories: ['src/mt_core'],
+	    dependencies: wcp_dependencies)
 
 test('MT_CORE_TEST', mt_core_test)
 
