@@ -16,7 +16,6 @@ wegl = dependency('wayland-egl')
 glesv2 = dependency('glesv2')
 freetype = dependency('freetype2')
 xkbcommon = dependency('xkbcommon')
-epoll = dependency('epoll-shim')
 
 wayland_client      = dependency('wayland-client')
 wayland_cursor      = dependency('wayland-cursor')
