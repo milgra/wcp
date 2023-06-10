@@ -55,9 +55,13 @@ int ui_execute_command(char* command, char** result)
 {
     char buff[100];
 
+    mt_log_debug("Executing %s", command);
+
     FILE* pipe = popen(command, "r"); // CLOSE 0
     while (fgets(buff, sizeof(buff), pipe) != NULL) *result = mt_string_append(*result, buff);
     pclose(pipe); // CLOSE 0
+
+    mt_log_debug("Result : %s", *result);
 
     return 0;
 }
