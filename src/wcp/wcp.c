@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
     printf("Wayland Control Panel v" WCP_VERSION
 	   " by Milan Toth ( www.milgra.com )\n"
 	   "If you like this app try :\n"
-	   "- Sway Oveview ( github.com/milgra/sov )\n"
+	   "- Sway Overview ( github.com/milgra/sov )\n"
 	   "- Visual Music Player (github.com/milgra/vmp)\n"
 	   "- Multimedia File Manager (github.com/milgra/mmfm)\n"
 	   "- SwayOS (swayos.github.io)\n"
