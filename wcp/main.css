@@ -1,6 +1,6 @@
 #main {
     border-radius: 10px;
-    background-color: #000000DD;
+    background-color: #00000044;
 }
 
 .fullscaleview {
@@ -46,10 +46,10 @@
     height: 100%;
     background-color: #00000000;
     margin-left: 5px;
-    line-height: 30px;
+    line-height: 25px;
     color: #DEDEDEFF;
-    font-size: 14px;
-    font-family: "Liberation Sans:style=Bold";
+    font-size: 16px;
+    font-family: "Terminus:style=Bold:size=16";
 }
 
 .button0 {
@@ -160,5 +160,21 @@
     width: 30px;
     height: 30px;
     background-image: url("reboot.png");
+    blocks: no;
+}
+
+#printericon {
+    margin: auto;
+    width: 30px;
+    height: 30px;
+    background-image: url("printer.png");
+    blocks: no;
+}
+
+#keyboardicon {
+    margin: auto;
+    width: 30px;
+    height: 30px;
+    background-image: url("keyboard.png");
     blocks: no;
 }
