@@ -1,6 +1,6 @@
 # wcp - Wayland Control Panel
 
-Script-driven control panel/system menu for wayland based window managers.
+Layout and control script for kuid that implements a control panel/system menu for wayland based window managers.
 
 Wayland Control Panel was made for SwayOS (https://swayos.github.io)
 
@@ -10,64 +10,21 @@ Watch the introduction/user guide [video on youtube](https://www.youtube.com/wat
 
 ## Features ##
 
-- content and style fully configurable via html and css
-- functionality fully controllable via shell scripts
+- content, style, behaviour freely adjustable
 - super lightweight ( no gtk & qt )
 
 ## Description ##
 
-Wayland control panel is an application for popup control menu, system menu or any kind of menu for UNIX-like operating systems.
+Wayland control panel is an application for control menu, system menu or any kind of control menu for UNIX-like operating systems.
 You can trigger it's appereance with a shortcut or with a button in the status bar.
-It can be structured via html, styled via css.
-Button, label and slider values are coming from scripts and it can invoke scripts in case of interaction, it's totally configurable.
-By default it looks for config files under ~/.config/wcp/ and falls back to /usr/local/share/wcp.
+It can be structured via html, styled via css, programmed via bash.
 
 ## Installation
 
-### Compiling from source
+First install ( or build ) Kinetic UI daemon.
+Check out this repository.
+Copy the res folder and wcp.sh somewhere, the best place is under ~/.config/wcp
 
-Install the needed dependencies and libraries:
-
-```
-git meson ninja-build pkg-config
-libpng,libfreetype,
-libgl,libglew,libegl,libwegl,wayland-client,wayland-protocols,xkbcommon,gles2
-fonts-terminus
-````
-
-On debian based systems ( over version 12 ):
-```
-sudo apg-get install git meson ninja-build pkg-config libpng-dev libfreetype-dev libgl-dev libegl-dev libglew-dev libwayland-dev libxkbcommon-dev wayland-protocols libgles2-mesa-dev
-
-```
-
-On arch based systems :
-```
-sudo pacman -Qs git meson pkg-config ninja glew wayland-protocols libpng freetype2 libgl libegl wayland wayland-protocols libxkbcommon 
-```
-or use the AUR
-
-Then run these commands:
-
-```
-git clone git@github.com:milgra/wcp.git
-cd wcp
-meson build --buildtype=release
-ninja -C build
-sudo ninja -C build install
-```
-
-### From packages
-
-[![Packaging status](https://repology.org/badge/tiny-repos/wcp.svg)](https://repology.org/project/wcp/versions)
-
-## Usage
-
-Launch wcp in a terminal, enter 0 to hide, 1 to show, 2 to toggle, 3 to quit wcp and press return.
-
-```
-wcp
-```
 
 ### Usage with sway wm
 

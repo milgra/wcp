@@ -73,7 +73,7 @@ kuid -v <&3 | while IFS= read -r line; do                     # start kuid with 
 	then
 	    ########################## init layer ##########################
 	    echo "create layer width 300 height 258 anchor rt margin 10" >&3
-	    echo "load html src wcp/main.html" >&3
+	    echo "load html src ~/.config/wcp/res/main.html" >&3
 	    ################################################################
 	    
 	    update                                            # update sliders and labels
