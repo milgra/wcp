@@ -21,11 +21,12 @@ It can be structured via html, styled via css, programmed via bash.
 
 ## Installation
 
-First install ( or build ) Kinetic UI daemon.
+First install ( or build ) (Kinetic UI daemon.)[https://github.com/milgra/kuid]
 Check out this repository.
 Copy the res folder under ~/.config/wcp
-If you use debian or void linux, copy wcp-debian.sh or wcp-void.sh under ~/.config/wcp.
-If you use something else copy wcp-templaye.sh under ~/.config/wcp and edit it to use utilities from your configuration.
+If you use debian or void linux, copy wcp-debian.sh or wcp-void.sh to ~/.config/wcp/wcp.sh
+If you use something else copy wcp-template.sh under ~/.config/wcp/wcp.sh and edit it to use utilities from your configuration.
+Finally execute ~/.config/wcp.sh in your autostart script.
 
 ### Usage with sway wm
 
