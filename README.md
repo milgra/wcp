@@ -23,8 +23,9 @@ It can be structured via html, styled via css, programmed via bash.
 
 First install ( or build ) Kinetic UI daemon.
 Check out this repository.
-Copy the res folder and wcp.sh somewhere, the best place is under ~/.config/wcp
-
+Copy the res folder under ~/.config/wcp
+If you use debian or void linux, copy wcp-debian.sh or wcp-void.sh under ~/.config/wcp.
+If you use something else copy wcp-templaye.sh under ~/.config/wcp and edit it to use utilities from your configuration.
 
 ### Usage with sway wm
 
