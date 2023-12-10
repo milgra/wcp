@@ -104,6 +104,12 @@ kuid -v <&3 | while IFS= read -r line; do                     # start kuid with 
 
 		swaymsg exec blueman-manager
 
+	    elif [ ${words[3]} == "printerbtn" ] ||
+		 [ ${words[3]} == "printerlabelback" ]           # wifi button pressed
+	    then
+
+		swaymsg exec system-config-printer
+
 	    elif [ ${words[3]} == "lockbtn" ]                 # lock button pressed
 	    then
 
