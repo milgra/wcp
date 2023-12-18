@@ -10,7 +10,7 @@ exec 3<>$PIPE_IN
 # update sliders and labels in ui
 function update()
 {
-    vol=$(pulsemixer --get-volume | awk '{print $1;}')
+    vol=$(pamixer --get-volume | awk '{print $1;}')
     volrat=$(echo "scale=2 ; $vol / 100" | bc)
 
     lcdact=$(brightnessctl g)
