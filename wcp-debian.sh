@@ -20,7 +20,7 @@ function update()
     lcdmax=$(brightnessctl m)
     lcdrat=$(echo "scale=2 ; $lcdact / $lcdmax" | bc)
     echo "WCP.SH Brightness ratio $lcdrat"
-
+    
     echo "WCP.SH Getting bluetooth device"
     btdevice=$(bluetoothctl info | sed -n 2p | awk '{for(i=2;i<=NF;i++) printf $i" "}')
     if [ ${#btdevice} -eq 0 ]
@@ -40,7 +40,7 @@ function update()
     echo "WCP.SH Getting layout"
     layout=$(swaymsg -t get_inputs | jq '.[0].xkb_active_layout_name' | sed 's/^.//;s/.$//')
     echo "WCP.SH Layout $layout"
-
+    
     echo "set ratio div volslider value $volrat" >&3
     echo "set ratio div lcdslider value $lcdrat" >&3
     echo "set text div btoothlabel value $btdevice" >&3
@@ -62,7 +62,7 @@ kuid -v <&3 | while IFS= read -r line; do                     # start kuid with 
 	    echo "WCP.SH Creating layer"
 	    echo "create layer width 300 height 258 anchor rt margin 10" >&3
 	    echo "load html src ~/.config/wcp/res/main.html" >&3
-	    echo "WCP.SH LAyer created"
+	    echo "WCP.SH Layer created"
 	    
 	    update                                            # update sliders and labels
 
@@ -81,7 +81,7 @@ kuid -v <&3 | while IFS= read -r line; do                     # start kuid with 
 		vol=${words[7]}
 		res=$(pactl set-sink-volume @DEFAULT_SINK@ $vol%) # pactl
 		echo "WCP.SH Volume set"
-
+		
 	    elif [ ${words[3]} == "lcdslider" ]               # lcd slider moved
 	    then
 
