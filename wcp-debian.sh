@@ -79,7 +79,7 @@ kuid -v <&3 | while IFS= read -r line; do                     # start kuid with 
 
 		echo "WCP.SH Setting volume"
 		vol=${words[7]}
-		res=$(pactl set-sink-volume @DEFAULT_SINK@ $vol%) # pactl
+		res=$(wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ $vol%) # wpctl
 		echo "WCP.SH Volume set"
 		
 	    elif [ ${words[3]} == "lcdslider" ]               # lcd slider moved
